@@ -40,8 +40,8 @@ public class Main {
 //        product.applyDiscount(10);
 //        product.printInfo();
 
-        Laptop laptop = new Laptop("HP",1000);
-        laptop.setPrice(2000);
-        laptop.printInfo();
+//        Laptop laptop = new Laptop("HP",1000);
+//        laptop.setPrice(2000);
+//        laptop.printInfo();
     }
 }
