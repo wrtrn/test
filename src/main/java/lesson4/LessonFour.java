@@ -360,13 +360,14 @@ public class LessonFour {
 
         while (true) {
             int number = scanner.nextInt();
+            if (number < 0) {
+                continue;
+            }
             if (number == 0) {
                 System.out.println("Finished");
                 break;
             } else {
-                if (number > 0) {
-                    System.out.println(number);
-                }
+                System.out.println(number);
             }
         }
     }
