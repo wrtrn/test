@@ -1,7 +1,7 @@
 package complexTasks.userDataValidator;
 
 public class UserValidator extends User {
-    private boolean validationEnabled;
+    private static boolean validationEnabled = false;
 
     public UserValidator(String name, int age, String email) {
         super(name, age, email);
@@ -42,7 +42,11 @@ public class UserValidator extends User {
         return true;
     }
 
-    public void changeValidationStatus(boolean validationEnabled) {
-        this.validationEnabled = validationEnabled;
+    public static void enableValidation() {
+        validationEnabled = true;
+    }
+
+    public static void disableValidation() {
+        validationEnabled = false;
     }
 }

@@ -13,13 +13,11 @@ public class UserValidatorTest {
         UserValidator userValidator2 = new UserValidator("evan", 15, "aa.com");
         UserValidator userValidator3 = new UserValidator("", 2, "aa%@a.com");
 
+        UserValidator.disableValidation();
         Assertions.assertTrue(userValidator1.nameCheck());
         Assertions.assertTrue(userValidator2.nameCheck());
         Assertions.assertTrue(userValidator3.nameCheck());
-
-        userValidator1.changeValidationStatus(true);
-        userValidator2.changeValidationStatus(true);
-        userValidator3.changeValidationStatus(true);
+        UserValidator.enableValidation();
 
         Assertions.assertTrue(userValidator1.nameCheck());
         Assertions.assertThrows(InvalidUserException.class, userValidator2::nameCheck);
@@ -39,6 +37,8 @@ public class UserValidatorTest {
         UserValidator userValidator9 = new UserValidator("evan", -50, "aa.com");
         UserValidator userValidator10 = new UserValidator("", 2, "aa%@a.com");
 
+        UserValidator.disableValidation();
+
         Assertions.assertTrue(userValidator1.ageCheck());
         Assertions.assertTrue(userValidator2.ageCheck());
         Assertions.assertTrue(userValidator3.ageCheck());
@@ -50,16 +50,7 @@ public class UserValidatorTest {
         Assertions.assertTrue(userValidator9.ageCheck());
         Assertions.assertTrue(userValidator10.ageCheck());
 
-        userValidator1.changeValidationStatus(true);
-        userValidator2.changeValidationStatus(true);
-        userValidator3.changeValidationStatus(true);
-        userValidator4.changeValidationStatus(true);
-        userValidator5.changeValidationStatus(true);
-        userValidator6.changeValidationStatus(true);
-        userValidator7.changeValidationStatus(true);
-        userValidator8.changeValidationStatus(true);
-        userValidator9.changeValidationStatus(true);
-        userValidator10.changeValidationStatus(true);
+        UserValidator.enableValidation();
 
         Assertions.assertTrue(userValidator1.ageCheck());
         Assertions.assertTrue(userValidator2.ageCheck());
@@ -88,6 +79,8 @@ public class UserValidatorTest {
         UserValidator userValidator9 = new UserValidator("evan", -50, "a@a@asd.com");
         UserValidator userValidator10 = new UserValidator("", 2, "aa%@a.com");
 
+        UserValidator.disableValidation();
+
         Assertions.assertTrue(userValidator0.emailCheck());
         Assertions.assertTrue(userValidator1.emailCheck());
         Assertions.assertTrue(userValidator2.emailCheck());
@@ -100,17 +93,7 @@ public class UserValidatorTest {
         Assertions.assertTrue(userValidator9.emailCheck());
         Assertions.assertTrue(userValidator10.emailCheck());
 
-        userValidator0.changeValidationStatus(true);
-        userValidator1.changeValidationStatus(true);
-        userValidator2.changeValidationStatus(true);
-        userValidator3.changeValidationStatus(true);
-        userValidator4.changeValidationStatus(true);
-        userValidator5.changeValidationStatus(true);
-        userValidator6.changeValidationStatus(true);
-        userValidator7.changeValidationStatus(true);
-        userValidator8.changeValidationStatus(true);
-        userValidator9.changeValidationStatus(true);
-        userValidator10.changeValidationStatus(true);
+        UserValidator.enableValidation();
 
         Assertions.assertTrue(userValidator0.emailCheck());
         Assertions.assertTrue(userValidator1.emailCheck());
