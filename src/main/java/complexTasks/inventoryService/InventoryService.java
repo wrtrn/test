@@ -24,14 +24,15 @@ public class InventoryService {
         }
     }
 
-    public List<Product> getItem(String category) {
-        List<Product> itemsForResponse = new ArrayList<>();
-        if (!(itemsMap.get(category) == null)) {
-            itemsForResponse = itemsMap.get(category);
+    public void removeItem(String category, String itemForRemove) {
+        List<Product> itemsForNewMap = new ArrayList<>();
+        if (!((itemsMap.get(category) == null)||(itemsMap.get(category).isEmpty()))) {
+            itemsForNewMap = itemsMap.get(category).stream().filter(el -> !el.getName().equals(itemForRemove)).collect(Collectors.toList());
+            itemsMap.remove(category);
+            itemsMap.put(category, itemsForNewMap);
         } else {
             throw new OutOfStockException("No items in the category");
         }
-        return itemsForResponse;
     }
 
     public List<Product> searchInItemsAndFilter(String categoryName, String itemName) {

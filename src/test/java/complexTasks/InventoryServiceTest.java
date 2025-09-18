@@ -29,13 +29,37 @@ public class InventoryServiceTest {
         inventoryService.addItem(new Product("Brush7", 26.0, "Home3"));
         inventoryService.addItem(new Product("Brush8", 27.0, "Home3"));
 
-        Assertions.assertEquals(1, inventoryService.getItem("Home1").size());
-        Assertions.assertEquals(2, inventoryService.getItem("Home2").size());
-        Assertions.assertEquals("Brush4", inventoryService.getItem("Home3").getFirst().getName());
-        Assertions.assertEquals("Brush8", inventoryService.getItem("Home3").getLast().getName());
+        Assertions.assertEquals(1, inventoryService.getItemsMap().get("Home1").size());
+        Assertions.assertEquals(2, inventoryService.getItemsMap().get(("Home2")).size());
+        Assertions.assertEquals("Brush4", inventoryService.getItemsMap().get(("Home3")).getFirst().getName());
+        Assertions.assertEquals("Brush8", inventoryService.getItemsMap().get(("Home3")).getLast().getName());
         Assertions.assertEquals(3, inventoryService.getItemsMap().size());
+    }
 
-        Assertions.assertThrows(OutOfStockException.class, () -> inventoryService.getItem("NEW"));
+    @Test
+    public void removeItemTest() {
+        InventoryService inventoryService = new InventoryService();
+        InventoryService.openInventory();
+
+        inventoryService.addItem(new Product("Brush1", 10.0, "Home1"));
+        inventoryService.addItem(new Product("Brush2", 21.0, "Home2"));
+        inventoryService.addItem(new Product("Brush3", 22.0, "Home2"));
+        inventoryService.addItem(new Product("Brush4", 23.0, "Home3"));
+        inventoryService.addItem(new Product("Brush5", 24.0, "Home3"));
+        inventoryService.addItem(new Product("Brush6", 25.0, "Home3"));
+        inventoryService.addItem(new Product("Brush7", 26.0, "Home3"));
+        inventoryService.addItem(new Product("Brush8", 27.0, "Home3"));
+
+        inventoryService.removeItem("Home3", "Brush6");
+        Assertions.assertEquals(4, inventoryService.getItemsMap().get("Home3").size());
+
+
+        inventoryService.removeItem("Home3", "NEW");
+        Assertions.assertEquals(4, inventoryService.getItemsMap().get("Home3").size());
+
+        inventoryService.removeItem("Home1", "Brush1");
+        Assertions.assertThrows(OutOfStockException.class, () -> inventoryService.removeItem("Home1", "Brush1"));
+        Assertions.assertThrows(OutOfStockException.class, () -> inventoryService.removeItem("NEW", "Brush1"));
     }
 
     @Test
