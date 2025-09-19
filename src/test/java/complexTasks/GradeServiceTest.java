@@ -13,13 +13,13 @@ public class GradeServiceTest {
 
         GradeService<Integer> gradeService = new GradeService<>("Petr", "Russian", 4);
 
-        Student student2 = new Student("Ivan","Math", 5);
-        Student student3 = new Student("Zinovyi","Math", 0);
-        Student student4 = new Student("Zinovyi","Math", 5.5);
+        Student student2 = new Student("Ivan", "Math", 5);
+        Student student3 = new Student("Zinovyi", "Math", 0);
+        Student student4 = new Student("Zinovyi", "Math", 5.5);
 
-        Thread t1 = new Thread(()->gradeService.addGrade(student2));
-        Thread t2 = new Thread(()->gradeService.addGrade(student3));
-        Thread t3 = new Thread(()->gradeService.addGrade(student4));
+        Thread t1 = new Thread(() -> gradeService.addGrade(student2));
+        Thread t2 = new Thread(() -> gradeService.addGrade(student3));
+        Thread t3 = new Thread(() -> gradeService.addGrade(student4));
 
         t1.start();
         t2.start();
@@ -42,26 +42,26 @@ public class GradeServiceTest {
         Assertions.assertTrue(gradeService.getGradeList().getFirst().getGrade().equals(4));
 
 
-        Student student9 = new Student("Zinovyi","Math", -1);
+        Student student9 = new Student("Zinovyi", "Math", -1);
         //exception test
-        Assertions.assertThrows(InvalidGradeException.class, ()-> gradeService.addGrade(student9));
+        Assertions.assertThrows(InvalidGradeException.class, () -> gradeService.addGrade(student9));
     }
 
     @Test
-    public void averageTest(){
+    public void averageTest() {
 
         GradeService<Integer> gradeService = new GradeService<>("Petr", "Russian", 4);
 
-        Student student2 = new Student("Ivan","Russian", 5);
-        Student student3 = new Student("Zinovyi","Math", 0);
-        Student student4 = new Student("Zinovyi","Math", 5.5);
+        Student student2 = new Student("Ivan", "Russian", 5);
+        Student student3 = new Student("Zinovyi", "Math", 0);
+        Student student4 = new Student("Zinovyi", "Math", 5.5);
 
         gradeService.addGrade(student2);
         gradeService.addGrade(student3);
         gradeService.addGrade(student4);
 
-        Assertions.assertEquals(2.75,gradeService.averageGradeForSubject("Math"));
-        Assertions.assertEquals(4.5,gradeService.averageGradeForSubject("Russian"));
-        Assertions.assertEquals(0.0,gradeService.averageGradeForSubject("1234"));
+        Assertions.assertEquals(2.75, gradeService.averageGradeForSubject("Math"));
+        Assertions.assertEquals(4.5, gradeService.averageGradeForSubject("Russian"));
+        Assertions.assertEquals(0.0, gradeService.averageGradeForSubject("1234"));
     }
 }
