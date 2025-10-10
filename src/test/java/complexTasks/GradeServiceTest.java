@@ -1,8 +1,8 @@
 package complexTasks;
 
-import complexTasks.studentsGrade.GradeService;
-import complexTasks.studentsGrade.InvalidGradeException;
-import complexTasks.studentsGrade.Student;
+import expressJava.complexTasks.studentsGrade.GradeService;
+import expressJava.complexTasks.studentsGrade.InvalidGradeException;
+import expressJava.complexTasks.studentsGrade.Student;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

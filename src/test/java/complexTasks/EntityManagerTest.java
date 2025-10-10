@@ -1,7 +1,7 @@
 package complexTasks;
 
-import complexTasks.entityManager.EntityManager;
-import complexTasks.entityManager.Student;
+import expressJava.complexTasks.entityManager.EntityManager;
+import expressJava.complexTasks.entityManager.Student;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

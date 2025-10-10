@@ -1,8 +1,8 @@
 package complexTasks;
 
-import complexTasks.inventoryService.InventoryService;
-import complexTasks.inventoryService.OutOfStockException;
-import complexTasks.inventoryService.Product;
+import expressJava.complexTasks.inventoryService.InventoryService;
+import expressJava.complexTasks.inventoryService.OutOfStockException;
+import expressJava.complexTasks.inventoryService.Product;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -1,9 +1,9 @@
 package complexTasks;
 
-import complexTasks.movieService.Movie;
-import complexTasks.movieService.MovieService;
-import complexTasks.movieService.Rating;
-import complexTasks.movieService.RatingIsOutOfBoundsException;
+import expressJava.complexTasks.movieService.Movie;
+import expressJava.complexTasks.movieService.MovieService;
+import expressJava.complexTasks.movieService.Rating;
+import expressJava.complexTasks.movieService.RatingIsOutOfBoundsException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

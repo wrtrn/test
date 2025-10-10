@@ -1,7 +1,7 @@
 package complexTasks;
 
-import complexTasks.userDataValidator.InvalidUserException;
-import complexTasks.userDataValidator.UserValidator;
+import expressJava.complexTasks.userDataValidator.InvalidUserException;
+import expressJava.complexTasks.userDataValidator.UserValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
