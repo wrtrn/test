@@ -12,9 +12,7 @@ public class InMemoryStorage implements UrlStorage {
     }
 
     public static InMemoryStorage getInstance() {
-        if (instance == null)
-            instance = new InMemoryStorage();
-
+        if (instance == null) instance = new InMemoryStorage();
         return instance;
     }
 

@@ -6,7 +6,6 @@ import complexTasks.javaCore.clearCode.urlShortener.strategies.ShorteningStrateg
 import java.util.Map;
 
 public class UrlShortenerService {
-    private ShortenerFactory factory;
     private UrlStorage storage;
     private ShorteningStrategy strategy;
 
