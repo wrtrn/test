@@ -1,8 +1,8 @@
-package complexTasks.javaCore.clearCode.urlShortener;
+package clearCode.urlShortener;
 
-import complexTasks.javaCore.clearCode.urlShortener.strategies.Base62Strategy;
-import complexTasks.javaCore.clearCode.urlShortener.strategies.ShorteningStrategy;
-import complexTasks.javaCore.clearCode.urlShortener.strategies.UuidStrategy;
+import clearCode.urlShortener.strategies.Base62Strategy;
+import clearCode.urlShortener.strategies.ShorteningStrategy;
+import clearCode.urlShortener.strategies.UuidStrategy;
 
 public class ShortenerFactory {
     ShorteningStrategy createStrategy(String strategy) {

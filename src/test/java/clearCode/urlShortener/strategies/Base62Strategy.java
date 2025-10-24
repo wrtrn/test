@@ -1,4 +1,4 @@
-package complexTasks.javaCore.clearCode.urlShortener.strategies;
+package clearCode.urlShortener.strategies;
 
 public class Base62Strategy implements ShorteningStrategy {
 
