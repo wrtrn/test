@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.movieService.Movie;
 import expressJava.complexTasks.movieService.MovieService;

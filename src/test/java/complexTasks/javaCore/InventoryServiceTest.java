@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.inventoryService.InventoryService;
 import expressJava.complexTasks.inventoryService.OutOfStockException;

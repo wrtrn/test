@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.entityManager.EntityManager;
 import expressJava.complexTasks.entityManager.Student;
