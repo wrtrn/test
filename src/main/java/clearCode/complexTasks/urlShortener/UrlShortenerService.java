@@ -1,7 +1,7 @@
-package clearCode.urlShortener;
+package clearCode.complexTasks.urlShortener;
 
-import clearCode.urlShortener.storages.UrlStorage;
-import clearCode.urlShortener.strategies.ShorteningStrategy;
+import clearCode.complexTasks.urlShortener.storages.UrlStorage;
+import clearCode.complexTasks.urlShortener.strategies.ShorteningStrategy;
 
 import java.util.Map;
 

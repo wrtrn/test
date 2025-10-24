@@ -1,4 +1,4 @@
-package clearCode.urlShortener.storages;
+package clearCode.complexTasks.urlShortener.storages;
 
 import java.util.HashMap;
 import java.util.Map;

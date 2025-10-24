@@ -1,4 +1,4 @@
-package clearCode.urlShortener.strategies;
+package clearCode.complexTasks.urlShortener.strategies;
 
 import java.util.UUID;
 
