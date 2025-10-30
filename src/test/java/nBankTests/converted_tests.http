@@ -1,0 +1,331 @@
+@baseUrl = http://localhost:4111
+@authUser = Basic a2F0ZTE5OTg6dmVyeXNUUm9uZ1Bhc3N3b3JkMzMk
+@accept = */*
+
+### ------------------------------------------------------------
+### User Authorization (placeholder; use if login flow is required)
+### Note: If your API uses session-based auth, replace with actual login call.
+### ------------------------------------------------------------
+# GET {{baseUrl}}/api/v1/customer/profile
+# Authorization: {{authUser}}
+# Accept: {{accept}}
+
+### ------------------------------------------------------------
+### Accounts: Initial state
+### ------------------------------------------------------------
+
+### Positive: New user gets an empty accounts list
+GET {{baseUrl}}/api/v1/customer/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### ------------------------------------------------------------
+### Accounts: Create
+### ------------------------------------------------------------
+
+### Positive: User creates first account (should return ACC1 with zero balance)
+POST {{baseUrl}}/api/v1/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Positive: User creates another account (should return ACC2 with zero balance)
+POST {{baseUrl}}/api/v1/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### ------------------------------------------------------------
+### Transfers: From empty account (should fail 400)
+### ------------------------------------------------------------
+
+### Negative: Transfer from empty sender account should return 400
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 2,
+  "amount": 50
+}
+
+### ------------------------------------------------------------
+### Deposits: Valid boundary values
+### ------------------------------------------------------------
+
+### Positive: Deposit 4999 to account 1 (balance increases; correct account updated)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": 4999
+}
+
+### Positive: Deposit 5000 to account 1 (max allowed; balance increases)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": 5000
+}
+
+### Negative: Deposit 5001 to account 1 (should fail; balance unchanged)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": 5001
+}
+
+### Positive: Deposit 1 to account 1 (min positive; balance increases)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": 1
+}
+
+### Negative: Deposit negative amount -100 (should return 400)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": -100
+}
+
+### Negative: Deposit zero 0 (should return 400)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 1,
+  "balance": 0
+}
+
+### Negative: Deposit into someone else's account (id=3) should return 403
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 3,
+  "balance": 100
+}
+
+### Negative: Deposit into non-existing account (id=4) should return 403 (or 404 depending on API)
+POST {{baseUrl}}/api/v1/accounts/deposit
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "id": 4,
+  "balance": 100
+}
+
+### ------------------------------------------------------------
+### Transfers: Between own accounts
+### ------------------------------------------------------------
+
+### Positive: User can transfer between own accounts (1 -> 2, amount 50)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 2,
+  "amount": 50
+}
+
+### Positive: After transfer, receiver account (2) balance increased
+GET {{baseUrl}}/api/v1/customer/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Positive: After transfer, sender account (1) balance decreased
+GET {{baseUrl}}/api/v1/customer/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Positive: User sees only own accounts (not others)
+GET {{baseUrl}}/api/v1/customer/accounts
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### ------------------------------------------------------------
+### Transfers: To another user's account
+### ------------------------------------------------------------
+
+### Positive: User can transfer to another user (1 -> 3, amount 50)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 50
+}
+
+### Negative: Transfer amount 10001 (should fail by upper limit)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 10001
+}
+
+### Positive: Transfer amount 10000 (max allowed, should succeed)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 10000
+}
+
+### Positive: Transfer amount 9999 (should succeed)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 9999
+}
+
+### Positive: Transfer amount 1 (should succeed)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 1
+}
+
+### Negative: Transfer amount 0 (should fail)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 0
+}
+
+### Negative: Transfer negative amount (-400) (should fail)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": -400
+}
+
+### Negative: Transfer amount greater than sender balance (should fail)
+POST {{baseUrl}}/api/v1/accounts/transfer
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "senderAccountId": 1,
+  "receiverAccountId": 3,
+  "amount": 99999999
+}
+
+### ------------------------------------------------------------
+### Transactions: Visibility and access control
+### ------------------------------------------------------------
+
+### Positive: User can see transactions for own account id=1
+GET {{baseUrl}}/api/v1/accounts/1/transactions
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Negative: Request transactions for someone else's account id=3 (should fail)
+GET {{baseUrl}}/api/v1/accounts/3/transactions
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Negative: Request transactions for non-existent account id=9999 (should fail)
+GET {{baseUrl}}/api/v1/accounts/9999/transactions
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Negative: Request transactions for someone else's account id=4 (should fail)
+GET {{baseUrl}}/api/v1/accounts/4/transactions
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### ------------------------------------------------------------
+### Profile: Read and Update
+### ------------------------------------------------------------
+
+### Positive: User sees own name in profile
+GET {{baseUrl}}/api/v1/customer/profile
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Positive: User can update profile name to "Ivan"
+PUT {{baseUrl}}/api/v1/customer/profile
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "name": "Ivan"
+}
+
+### Positive: User sees updated name in profile
+GET {{baseUrl}}/api/v1/customer/profile
+Authorization: {{authUser}}
+Accept: {{accept}}
+
+### Edge: User can set empty name "" in profile (if allowed by API)
+PUT {{baseUrl}}/api/v1/customer/profile
+Authorization: {{authUser}}
+Accept: {{accept}}
+Content-Type: application/json
+
+{
+  "name": ""
+}
