@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.taskManager.Task;
 import expressJava.complexTasks.taskManager.TaskService;

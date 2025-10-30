@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.studentsGrade.GradeService;
 import expressJava.complexTasks.studentsGrade.InvalidGradeException;

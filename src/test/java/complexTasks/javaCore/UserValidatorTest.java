@@ -1,4 +1,4 @@
-package complexTasks;
+package complexTasks.javaCore;
 
 import expressJava.complexTasks.userDataValidator.InvalidUserException;
 import expressJava.complexTasks.userDataValidator.UserValidator;
