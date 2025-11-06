@@ -1,0 +1,5 @@
+package learning.clearCode.programmingPrinciples.dependencyInversion;
+
+public interface Sender {
+    public void send(String message);
+}
