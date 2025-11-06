@@ -1,7 +1,7 @@
-package nBankTests.secondPart;
+package nbank.secondPart;
 
 import io.restassured.http.ContentType;
-import nBankTests.BaseApiTest;
+import nbank.BaseApiTest;
 import org.apache.http.HttpStatus;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;

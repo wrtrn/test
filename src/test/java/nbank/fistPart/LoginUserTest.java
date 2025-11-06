@@ -1,10 +1,11 @@
-package nBankTests.fistPart;
+package nbank.fistPart;
 
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import org.apache.http.HttpStatus;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 
-public class CreateAccountTest {
+public class LoginUserTest {
     @BeforeAll
     public static void setupRestAssured() {
         RestAssured.filters(
@@ -21,7 +22,25 @@ public class CreateAccountTest {
     }
 
     @Test
-    public void userCanCreateAccountTest() {
+    public void adminCanGenerateAuthTokenTest() {
+        given()
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .body("""
+                        {
+                          "username": "admin",
+                          "password": "admin"
+                        }
+                        """)
+                .post("http://localhost:4111/api/v1/auth/login")
+                .then()
+                .assertThat()
+                .statusCode(HttpStatus.SC_OK)
+                .header("Authorization", "Basic YWRtaW46YWRtaW4=");
+    }
+
+    @Test
+    public void userCanGenerateAuthTokenTest() {
         // создание пользователя
         given()
                 .contentType(ContentType.JSON)
@@ -29,7 +48,7 @@ public class CreateAccountTest {
                 .header("Authorization", "Basic YWRtaW46YWRtaW4=")
                 .body("""
                         {
-                          "username": "kate2000111",
+                          "username": "kate2000",
                           "password": "Kate2000#",
                           "role": "USER"
                         }
@@ -39,13 +58,12 @@ public class CreateAccountTest {
                 .assertThat()
                 .statusCode(HttpStatus.SC_CREATED);
 
-        // получаем токен юзера
-        String userAuthHeader = given()
+        given()
                 .contentType(ContentType.JSON)
                 .accept(ContentType.JSON)
                 .body("""
                         {
-                          "username": "kate2000111",
+                          "username": "kate2000",
                           "password": "Kate2000#"
                         }
                         """)
@@ -53,20 +71,6 @@ public class CreateAccountTest {
                 .then()
                 .assertThat()
                 .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .header("Authorization");
-
-        // создаем аккаунт(счет)
-        given()
-                .header("Authorization", userAuthHeader)
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .post("http://localhost:4111/api/v1/accounts")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED);
-
-        // запросить все аккаунты пользователя и проверить, что наш аккаунт там
-
+                .header("Authorization", Matchers.notNullValue());
     }
 }

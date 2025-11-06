@@ -1,4 +1,4 @@
-package nBankTests;
+package nbank;
 
 import io.restassured.RestAssured;
 import io.restassured.filter.log.RequestLoggingFilter;

@@ -1,8 +1,8 @@
-package nBankTests.secondPart;
+package nbank.secondPart;
 
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
-import nBankTests.BaseApiTest;
+import nbank.BaseApiTest;
 import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
