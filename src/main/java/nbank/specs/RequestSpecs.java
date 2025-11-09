@@ -5,6 +5,8 @@ import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import nbank.models.LoginUserRequest;
+import nbank.requests.LoginUserRequester;
 
 import java.util.List;
 
@@ -31,7 +33,16 @@ public class RequestSpecs {
                 .build();
     }
 
-    public static RequestSpecification authAsUser(String username, String password){
+    public static RequestSpecification authAsUser(String username, String password) {
+        String userAuthHeader = new LoginUserRequester(
+                RequestSpecs.unauthSpec(),
+                ResponseSpecs.requestReturnsOK())
+                .post(LoginUserRequest.builder().username(username).password(password).build())
+                .extract()
+                .header("Authorization");
 
+        return defaultRequestBuilder()
+                .addHeader("Authorization", userAuthHeader)
+                .build();
     }
 }
