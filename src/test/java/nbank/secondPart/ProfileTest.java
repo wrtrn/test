@@ -1,82 +1,55 @@
 package nbank.secondPart;
 
-import io.restassured.http.ContentType;
-import nbank.BaseApiTest;
-import org.apache.http.HttpStatus;
+import io.restassured.specification.RequestSpecification;
+import nbank.BaseTest;
+import nbank.models.CreateUserResponse;
+import nbank.models.ProfileResponse;
+import nbank.models.ProfileUpdateRequest;
+import nbank.requests.CustomerProfileRequester;
+import nbank.specs.RequestSpecs;
+import nbank.specs.ResponseSpecs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.given;
-
-public class ProfileTest extends BaseApiTest {
+public class ProfileTest extends BaseTest {
 
     @Test
     public void userCanUpdateProfileName() {
-        String body = """
-                {
-                  "name": "Ivan"
-                }
-                """;
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(body)
-                .when()
-                .put("/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK).toString();
+        CreateUserResponse userResponse = createUser();
 
-        String name = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .get("/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .jsonPath()
-                .getString("name");
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        Assertions.assertEquals("Ivan", name);
+        ProfileUpdateRequest body = ProfileUpdateRequest.builder()
+                .name("Ivan")
+                .build();
+
+        new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .put(body);
+
+        ProfileResponse response = new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .get().extract().as(ProfileResponse.class);
+
+
+        Assertions.assertEquals("Ivan", response.getName());
     }
 
     @Test
     public void userCanSetEmptyName() {
-        String body = """
-                {
-                  "name": ""
-                }
-                """;
+        CreateUserResponse userResponse = createUser();
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(body)
-                .when()
-                .put("/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK).toString();
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        String name = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .get("/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .jsonPath()
-                .getString("name");
+        ProfileUpdateRequest body = ProfileUpdateRequest.builder()
+                .name("")
+                .build();
 
-        Assertions.assertEquals("", name);
+        new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .put(body);
+
+        ProfileResponse response = new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .get().extract().as(ProfileResponse.class);
+
+        Assertions.assertEquals("", response.getName());
     }
 }

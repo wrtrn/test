@@ -7,19 +7,14 @@ import nbank.models.BaseModel;
 
 import static io.restassured.RestAssured.given;
 
-public class CreateAccountRequester extends Request {
-    public CreateAccountRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
+public class GetAccountTransactionsRequester extends Request {
+    public GetAccountTransactionsRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
         super(requestSpecification, responseSpecification);
     }
 
     @Override
     public ValidatableResponse post(BaseModel model) {
-        return given()
-                .spec(requestSpecification)
-                .post("/api/v1/accounts")
-                .then()
-                .assertThat()
-                .spec(responseSpecification);
+        return null;
     }
 
     @Override
@@ -27,9 +22,17 @@ public class CreateAccountRequester extends Request {
         return null;
     }
 
+    public ValidatableResponse get(long accountId) {
+        return given()
+                .spec(requestSpecification)
+                .get("/api/v1/accounts/" + accountId + "/transactions")
+                .then()
+                .assertThat()
+                .spec(responseSpecification);
+    }
+
     @Override
     public ValidatableResponse put(BaseModel model) {
         return null;
     }
-
 }

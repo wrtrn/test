@@ -1,92 +1,107 @@
 package nbank.secondPart;
 
-import io.restassured.http.ContentType;
-import nbank.BaseApiTest;
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.Assertions;
+import io.restassured.specification.RequestSpecification;
+import nbank.BaseTest;
+import nbank.models.*;
+import nbank.requests.CreateAccountRequester;
+import nbank.requests.DepositMoneyRequester;
+import nbank.requests.GetAccountTransactionsRequester;
+import nbank.requests.TransferMoneyRequester;
+import nbank.specs.RequestSpecs;
+import nbank.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
+import static org.hamcrest.Matchers.equalTo;
 
-import static io.restassured.RestAssured.given;
-
-public class TransactionsTest extends BaseApiTest {
+public class TransactionsTest extends BaseTest {
 
     @Test
     public void userCanSeeTransactionForHisAccount() {
-        int firstUserAccountNumber = createAccount(getFirstUserToken());
-        int secondUserAccountNumber = createAccount(getSecondUserToken());
 
-        addMoneyToAccount(getFirstUserToken(), firstUserAccountNumber, 500);
+        CreateUserResponse userResponse1 = createUser();
+        CreateUserResponse userResponse2 = createUser();
 
-        String requestBody = String.format(
-                """
-                                {
-                                  "senderAccountId": %s,
-                                  "receiverAccountId": %s,
-                                  "amount": %s
-                                }
-                        """, firstUserAccountNumber, secondUserAccountNumber, 50);
+        RequestSpecification authAsCreatedUser1 = RequestSpecs.authAsUser(userResponse1.getUsername(), userResponse1.getPassword());
+        RequestSpecification authAsCreatedUser2 = RequestSpecs.authAsUser(userResponse2.getUsername(), userResponse2.getPassword());
 
-        given()
-                .accept(ContentType.JSON)
-                .contentType(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(requestBody)
-                .when()
-                .post("/api/v1/accounts/transfer")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK);
-
-        List<Map<String, Object>> transactionsJson = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .get("/api/v1/accounts/" + firstUserAccountNumber + "/transactions")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
+        AccountResponse accountResponse1 = new CreateAccountRequester(authAsCreatedUser1, ResponseSpecs.entityWasCreated())
+                .post(null)
                 .extract()
-                .jsonPath()
-                .getList("$");
+                .as(AccountResponse.class);
 
-        Map<String, Object> lastTransaction = transactionsJson.get(transactionsJson.size() - 1);
-        Integer amount = ((Number) lastTransaction.get("amount")).intValue();
-        String type = (lastTransaction.get("type")).toString();
-        Assertions.assertEquals(50, amount);
-        Assertions.assertEquals("TRANSFER_OUT", type);
+        AccountResponse accountResponse2 = new CreateAccountRequester(authAsCreatedUser2, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        //deposit money json
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountResponse1.getId())
+                .balance(500)
+                .build();
+
+        //deposit money request
+        new DepositMoneyRequester(
+                authAsCreatedUser1,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositRequest);
+
+        long accountNumber1 = Integer.parseInt(accountResponse1.getAccountNumber().substring(3));
+        long accountNumber2 = Integer.parseInt(accountResponse2.getAccountNumber().substring(3));
+
+        TransferMoney body = TransferMoney.builder()
+                .amount(50)
+                .senderAccountId(accountNumber1)
+                .receiverAccountId(accountNumber2)
+                .build();
+
+        new TransferMoneyRequester(authAsCreatedUser1, ResponseSpecs.requestReturnsOK())
+                .post(body);
+
+        Transaction[] transactions =
+                new GetAccountTransactionsRequester(authAsCreatedUser1, ResponseSpecs.requestReturnsOK())
+                        .get(accountNumber1).extract().as(Transaction[].class);
+
+        softly.assertThat(500).isEqualTo(transactions[0].getAmount());
+        softly.assertThat("DEPOSIT").isEqualTo(transactions[0].getType());
+
+        softly.assertThat(50).isEqualTo(transactions[1].getAmount());
+        softly.assertThat("TRANSFER_OUT").isEqualTo(transactions[1].getType());
     }
 
     @Test
     public void userCanNotSeeTransactionForAnotherPersonAccount() {
-        int secondUserAccountNumber = createAccount(getSecondUserToken());
+        CreateUserResponse userResponse1 = createUser();
+        CreateUserResponse userResponse2 = createUser();
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .get("/api/v1/accounts/" + secondUserAccountNumber + "/transactions")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_FORBIDDEN);
+        RequestSpecification authAsCreatedUser1 = RequestSpecs.authAsUser(userResponse1.getUsername(), userResponse1.getPassword());
+        RequestSpecification authAsCreatedUser2 = RequestSpecs.authAsUser(userResponse2.getUsername(), userResponse2.getPassword());
+
+        AccountResponse accountResponse2 = new CreateAccountRequester(authAsCreatedUser2, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        long accountNumber2 = Integer.parseInt(accountResponse2.getAccountNumber().substring(3));
+
+        new GetAccountTransactionsRequester(authAsCreatedUser1, ResponseSpecs.requestReturnsForbidden())
+                .get(accountNumber2).assertThat().body(equalTo("You do not have permission to access this account"));
     }
 
     @Test
     public void userCanNotSeeTransactionForNotExistingAccount() {
-        int secondUserAccountNumber = createAccount(getSecondUserToken());
+        CreateUserResponse userResponse = createUser();
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .get("/api/v1/accounts/" + secondUserAccountNumber + 100 + "/transactions")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_FORBIDDEN);
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
+
+        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        long accountNumber = Integer.parseInt(accountResponse.getAccountNumber().substring(3));
+
+        new GetAccountTransactionsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsForbidden())
+                .get(accountNumber + 1).assertThat().body(equalTo("You do not have permission to access this account"));
     }
 }
