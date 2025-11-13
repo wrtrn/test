@@ -2,6 +2,7 @@ package nbank.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.BaseTest;
+import nbank.generators.RandomData;
 import nbank.models.CreateUserResponse;
 import nbank.models.ProfileResponse;
 import nbank.models.ProfileUpdateRequest;
@@ -15,13 +16,13 @@ public class ProfileTest extends BaseTest {
 
     @Test
     public void userCanUpdateProfileName() {
-
+        String username = RandomData.getUsername();
         CreateUserResponse userResponse = createUser();
 
         RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
         ProfileUpdateRequest body = ProfileUpdateRequest.builder()
-                .name("Ivan")
+                .name(username)
                 .build();
 
         new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
@@ -31,7 +32,7 @@ public class ProfileTest extends BaseTest {
                 .get().extract().as(ProfileResponse.class);
 
 
-        Assertions.assertEquals("Ivan", response.getName());
+        Assertions.assertEquals(username, response.getName());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package nbank.secondPart;
 
 import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 import nbank.BaseTest;
 import nbank.models.*;
 import nbank.requests.CreateAccountRequester;
@@ -11,6 +12,7 @@ import nbank.specs.RequestSpecs;
 import nbank.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
 
+import static nbank.specs.ResponseSpecs.requestReturnsForbidden;
 import static org.hamcrest.Matchers.equalTo;
 
 public class TransactionsTest extends BaseTest {
@@ -84,7 +86,7 @@ public class TransactionsTest extends BaseTest {
 
         long accountNumber2 = Integer.parseInt(accountResponse2.getAccountNumber().substring(3));
 
-        new GetAccountTransactionsRequester(authAsCreatedUser1, ResponseSpecs.requestReturnsForbidden())
+        new GetAccountTransactionsRequester(authAsCreatedUser1, requestReturnsForbidden())
                 .get(accountNumber2).assertThat().body(equalTo("You do not have permission to access this account"));
     }
 
@@ -101,7 +103,8 @@ public class TransactionsTest extends BaseTest {
 
         long accountNumber = Integer.parseInt(accountResponse.getAccountNumber().substring(3));
 
-        new GetAccountTransactionsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsForbidden())
-                .get(accountNumber + 1).assertThat().body(equalTo("You do not have permission to access this account"));
+        String errorText = "You do not have permission to access this account";
+        new GetAccountTransactionsRequester(authAsCreatedUser, requestReturnsForbidden(errorText))
+                .get(accountNumber + 1).assertThat().body(equalTo(errorText));
     }
 }

@@ -10,10 +10,13 @@ import nbank.requests.DepositMoneyRequester;
 import nbank.requests.GetCustomerAccountsRequester;
 import nbank.specs.RequestSpecs;
 import nbank.specs.ResponseSpecs;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import static nbank.generators.RandomData.getDepositValue;
 
 public class DepositTest extends BaseTest {
 
@@ -98,7 +101,7 @@ public class DepositTest extends BaseTest {
         //deposit money json
         DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(accountResponse.getId() + 1)
-                .balance(500)
+                .balance(getDepositValue())
                 .build();
 
         //deposit money request
@@ -125,7 +128,7 @@ public class DepositTest extends BaseTest {
         //deposit money json
         DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
                 .id(accountResponse2.getId())
-                .balance(500)
+                .balance(getDepositValue())
                 .build();
 
         //deposit money request

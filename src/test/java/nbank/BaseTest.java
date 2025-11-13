@@ -34,7 +34,6 @@ public class BaseTest {
                 .role(UserRole.USER.toString())
                 .build();
 
-
         CreateUserResponse createUserResponse = new AdminCreateUserRequester(RequestSpecs.adminSpec(),
                 ResponseSpecs.entityWasCreated())
                 .post(createUserRequest).extract().as(CreateUserResponse.class);
