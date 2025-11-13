@@ -7,29 +7,28 @@ import nbank.models.BaseModel;
 
 import static io.restassured.RestAssured.given;
 
-public class CreateAccountRequester extends Request {
-    public CreateAccountRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
+public class GetProfileRequester extends Request {
+    public GetProfileRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
         super(requestSpecification, responseSpecification);
     }
 
     @Override
     public ValidatableResponse post(BaseModel model) {
+        return null;
+    }
+
+    @Override
+    public ValidatableResponse get() {
         return given()
                 .spec(requestSpecification)
-                .post("/api/v1/accounts")
+                .get("/api/v1/customer/profile")
                 .then()
                 .assertThat()
                 .spec(responseSpecification);
     }
 
     @Override
-    public ValidatableResponse get() {
-        return null;
-    }
-
-    @Override
     public ValidatableResponse put(BaseModel model) {
         return null;
     }
-
 }

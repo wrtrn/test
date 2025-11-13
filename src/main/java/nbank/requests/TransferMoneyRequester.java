@@ -3,20 +3,21 @@ package nbank.requests;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
-import nbank.models.BaseModel;
+import nbank.models.TransferMoney;
 
 import static io.restassured.RestAssured.given;
 
-public class CreateAccountRequester extends Request {
-    public CreateAccountRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
+public class TransferMoneyRequester extends Request<TransferMoney> {
+    public TransferMoneyRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
         super(requestSpecification, responseSpecification);
     }
 
     @Override
-    public ValidatableResponse post(BaseModel model) {
+    public ValidatableResponse post(TransferMoney model) {
         return given()
                 .spec(requestSpecification)
-                .post("/api/v1/accounts")
+                .body(model)
+                .post("/api/v1/accounts/transfer")
                 .then()
                 .assertThat()
                 .spec(responseSpecification);
@@ -28,8 +29,7 @@ public class CreateAccountRequester extends Request {
     }
 
     @Override
-    public ValidatableResponse put(BaseModel model) {
+    public ValidatableResponse put(TransferMoney model) {
         return null;
     }
-
 }

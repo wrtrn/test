@@ -1,114 +1,140 @@
 package nbank.secondPart;
 
-import io.restassured.http.ContentType;
-import nbank.BaseApiTest;
-import org.apache.http.HttpStatus;
+import io.restassured.specification.RequestSpecification;
+import nbank.BaseTest;
+import nbank.models.AccountResponse;
+import nbank.models.CreateUserResponse;
+import nbank.models.DepositMoneyRequest;
+import nbank.requests.CreateAccountRequester;
+import nbank.requests.DepositMoneyRequester;
+import nbank.requests.GetCustomerAccountsRequester;
+import nbank.specs.RequestSpecs;
+import nbank.specs.ResponseSpecs;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static io.restassured.RestAssured.given;
+import static nbank.generators.RandomData.getDepositValue;
 
-public class DepositTest extends BaseApiTest {
+public class DepositTest extends BaseTest {
+
 
     @ParameterizedTest
     @ValueSource(ints = {4999, 5000, 1})
     public void DepositToAccount(int expectedAmount) {
-        int accountNumber = createAccount(getFirstUserToken());
+        CreateUserResponse userResponse = createUser();
 
-        addMoneyToAccount(getFirstUserToken(), accountNumber, expectedAmount);
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        Double amountFromResponse = getAccountBalance(getFirstUserToken(), accountNumber);
+        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
 
-        Assertions.assertEquals(expectedAmount, amountFromResponse);
+        //deposit money json
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountResponse.getId())
+                .balance(expectedAmount)
+                .build();
+
+        //deposit money request
+        new DepositMoneyRequester(
+                authAsCreatedUser,
+                ResponseSpecs.requestReturnsOK())
+                .post(depositRequest);
+
+        AccountResponse accountsResponse = new GetCustomerAccountsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(AccountResponse[].class)[0];
+
+        Assertions.assertEquals(expectedAmount, accountsResponse.getTransactions().getFirst().getAmount());
     }
 
     @ParameterizedTest
     @ValueSource(ints = {5001, -100, 0})
     public void depositProhibitedAmountOfMoney(int expectedAmount) {
-        int accountNumber = createAccount(getFirstUserToken());
 
-        String body = String.format(
-                """
-                        {
-                          "id": %s,
-                          "balance": %s
-                        }
-                        """, accountNumber, expectedAmount);
+        CreateUserResponse userResponse = createUser();
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(body)
-                .when()
-                .post("/api/v1/accounts/deposit")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST)
-                .extract();
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        Double amountFromResponce = getAccountBalance(getFirstUserToken(), accountNumber);
+        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
 
-        Assertions.assertEquals(amountFromResponce, 0);
-    }
+        //deposit money json
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountResponse.getId())
+                .balance(expectedAmount)
+                .build();
 
-    @Test
-    public void depositToSomeoneElseOrNonExistingAccount() {
-        int someoneElseAccountNumber = createAccount(getSecondUserToken());
+        //deposit money request
+        new DepositMoneyRequester(
+                authAsCreatedUser,
+                ResponseSpecs.requestReturnsBadRequest())
+                .post(depositRequest);
 
-        String body = String.format(
-                """
-                        {
-                          "id": %s,
-                          "balance": %s
-                        }
-                        """, someoneElseAccountNumber, 100);
+        AccountResponse accountsResponse = new GetCustomerAccountsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .get()
+                .extract()
+                .as(AccountResponse[].class)[0];
 
-
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(body)
-                .when()
-                .post("/api/v1/accounts/deposit")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_FORBIDDEN)
-                .extract();
-
-        Double amountFromResponce = getAccountBalance(getSecondUserToken(), someoneElseAccountNumber);
-
-        Assertions.assertEquals(amountFromResponce, 0);
+        Assertions.assertEquals(0, accountsResponse.getTransactions().size());
     }
 
     @Test
     public void depositToNonExistingAccount() {
-        int nonExistingAccountNumber = createAccount(getSecondUserToken()) + 100;
 
-        String body = String.format(
-                """
-                        {
-                          "id": %s,
-                          "balance": %s
-                        }
-                        """, nonExistingAccountNumber, 100);
+        CreateUserResponse userResponse = createUser();
 
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .body(body)
-                .when()
-                .post("/api/v1/accounts/deposit")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_FORBIDDEN)
-                .extract();
+        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
 
-        Assertions.assertThrows(NullPointerException.class, () -> getAccountBalance(getSecondUserToken(), nonExistingAccountNumber));
+        //deposit money json
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountResponse.getId() + 1)
+                .balance(getDepositValue())
+                .build();
+
+        //deposit money request
+        new DepositMoneyRequester(
+                authAsCreatedUser,
+                ResponseSpecs.requestReturnsForbidden())
+                .post(depositRequest);
+    }
+
+    @Test
+    public void depositToSomeoneElseAccount() {
+
+        CreateUserResponse userResponse1 = createUser();
+        CreateUserResponse userResponse2 = createUser();
+
+        RequestSpecification authAsCreatedUser1 = RequestSpecs.authAsUser(userResponse1.getUsername(), userResponse1.getPassword());
+        RequestSpecification authAsCreatedUser2 = RequestSpecs.authAsUser(userResponse2.getUsername(), userResponse2.getPassword());
+
+        AccountResponse accountResponse2 = new CreateAccountRequester(authAsCreatedUser2, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        //deposit money json
+        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
+                .id(accountResponse2.getId())
+                .balance(getDepositValue())
+                .build();
+
+        //deposit money request
+        new DepositMoneyRequester(
+                authAsCreatedUser1,
+                ResponseSpecs.requestReturnsForbidden())
+                .post(depositRequest);
     }
 }

@@ -7,8 +7,8 @@ import nbank.models.BaseModel;
 
 import static io.restassured.RestAssured.given;
 
-public class CreateAccountRequester extends Request {
-    public CreateAccountRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
+public class DepositMoneyRequester extends Request {
+    public DepositMoneyRequester(RequestSpecification requestSpecification, ResponseSpecification responseSpecification) {
         super(requestSpecification, responseSpecification);
     }
 
@@ -16,8 +16,8 @@ public class CreateAccountRequester extends Request {
     public ValidatableResponse post(BaseModel model) {
         return given()
                 .spec(requestSpecification)
-                .post("/api/v1/accounts")
-                .then()
+                .body(model)
+                .post("/api/v1/accounts/deposit").then()
                 .assertThat()
                 .spec(responseSpecification);
     }
@@ -31,5 +31,4 @@ public class CreateAccountRequester extends Request {
     public ValidatableResponse put(BaseModel model) {
         return null;
     }
-
 }

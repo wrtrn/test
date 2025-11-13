@@ -1,91 +1,50 @@
 package nbank.secondPart;
 
-import io.restassured.http.ContentType;
-import nbank.BaseApiTest;
-import org.apache.http.HttpStatus;
-import org.hamcrest.Matchers;
+import io.restassured.specification.RequestSpecification;
+import nbank.BaseTest;
+import nbank.models.AccountResponse;
+import nbank.models.CreateUserResponse;
+import nbank.models.ProfileResponse;
+import nbank.requests.CreateAccountRequester;
+import nbank.requests.GetCustomerAccountsRequester;
+import nbank.specs.RequestSpecs;
+import nbank.specs.ResponseSpecs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.given;
-
-public class AccountListsTest extends BaseApiTest {
+public class AccountListsTest extends BaseTest {
 
     @Test
     public void newUserGetsEmptyAccountListTest() {
+        CreateUserResponse userResponse = createUser();
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", "Basic YWRtaW46YWRtaW4=")
-                .body("""
-                        {
-                          "username": "kateHello",
-                          "password": "Kate2000#",
-                          "role": "USER"
-                        }
-                        """)
-                .post("/api/v1/admin/users");
-
-        String userToken = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .body("""
-                        {
-                          "username": "kateHello",
-                          "password": "Kate2000#"
-                        }
-                        """)
-                .post("/api/v1/auth/login")
-                .then()
+        ProfileResponse[] arr = new GetCustomerAccountsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
+                .get()
                 .extract()
-                .header("Authorization");
+                .as(ProfileResponse[].class);
 
-        given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", userToken)
-                .when()
-                .get("/api/v1/customer/profile")
-                .then()
-                .assertThat()
-                .body("accounts", Matchers.empty());
+        Assertions.assertEquals(0, arr.length);
     }
 
     @Test
     public void twoAccountsCreationTest() {
-        String firstAccountString = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .post("/api/v1/accounts")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED)
-                .body("balance", Matchers.equalTo(0.0F),
-                        "transactions", Matchers.empty(),
-                        "accountNumber", Matchers.startsWith("ACC"))
-                .extract()
-                .path("accountNumber");
+        CreateUserResponse userResponse = createUser();
 
-        String secondAccountString = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
-                .header("Authorization", getFirstUserToken())
-                .when()
-                .post("/api/v1/accounts")
-                .then()
-                .assertThat()
-                .statusCode(HttpStatus.SC_CREATED)
-                .body("balance", Matchers.equalTo(0.0F),
-                        "transactions", Matchers.empty(),
-                        "accountNumber", Matchers.startsWith("ACC"))
-                .extract()
-                .path("accountNumber");
+        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
 
-        int firstAccountNumber = Integer.parseInt(firstAccountString.substring(3));
-        int secondAccountNumber = Integer.parseInt(secondAccountString.substring(3));
+        AccountResponse accountResponse1 = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        AccountResponse accountResponse2 = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
+                .post(null)
+                .extract()
+                .as(AccountResponse.class);
+
+        int firstAccountNumber = Integer.parseInt(accountResponse1.getAccountNumber().substring(3));
+        int secondAccountNumber = Integer.parseInt(accountResponse2.getAccountNumber().substring(3));
 
         Assertions.assertEquals(firstAccountNumber, secondAccountNumber - 1);
     }

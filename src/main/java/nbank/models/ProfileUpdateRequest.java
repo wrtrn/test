@@ -1,0 +1,14 @@
+package nbank.models;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ProfileUpdateRequest extends BaseModel {
+    private String name;
+}
