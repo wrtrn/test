@@ -3,12 +3,11 @@ package nbank.secondPart;
 import io.restassured.specification.RequestSpecification;
 import nbank.BaseTest;
 import nbank.generators.RandomData;
-import nbank.models.CreateUserResponse;
+import nbank.models.CreateUserRequest;
 import nbank.models.ProfileResponse;
-import nbank.models.ProfileUpdateRequest;
-import nbank.requests.CustomerProfileRequester;
+import nbank.requests.steps.AdminSteps;
+import nbank.requests.steps.UserSteps;
 import nbank.specs.RequestSpecs;
-import nbank.specs.ResponseSpecs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -16,41 +15,24 @@ public class ProfileTest extends BaseTest {
 
     @Test
     public void userCanUpdateProfileName() {
-        String username = RandomData.getUsername();
-        CreateUserResponse userResponse = createUser();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 
-        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
+        String newUsername = RandomData.getUsername();
+        UserSteps.updateProfile(authAsUser, newUsername);
 
-        ProfileUpdateRequest body = ProfileUpdateRequest.builder()
-                .name(username)
-                .build();
-
-        new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .put(body);
-
-        ProfileResponse response = new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .get().extract().as(ProfileResponse.class);
-
-
-        Assertions.assertEquals(username, response.getName());
+        ProfileResponse response = UserSteps.getCustomerProfile(authAsUser);
+        Assertions.assertEquals(newUsername, response.getName());
     }
 
     @Test
     public void userCanSetEmptyName() {
-        CreateUserResponse userResponse = createUser();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 
-        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
+        UserSteps.updateProfile(authAsUser, "");
 
-        ProfileUpdateRequest body = ProfileUpdateRequest.builder()
-                .name("")
-                .build();
-
-        new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .put(body);
-
-        ProfileResponse response = new CustomerProfileRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .get().extract().as(ProfileResponse.class);
-
+        ProfileResponse response = UserSteps.getCustomerProfile(authAsUser);
         Assertions.assertEquals("", response.getName());
     }
 }

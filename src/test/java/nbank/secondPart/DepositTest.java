@@ -3,14 +3,10 @@ package nbank.secondPart;
 import io.restassured.specification.RequestSpecification;
 import nbank.BaseTest;
 import nbank.models.AccountResponse;
-import nbank.models.CreateUserResponse;
-import nbank.models.DepositMoneyRequest;
-import nbank.requests.CreateAccountRequester;
-import nbank.requests.DepositMoneyRequester;
-import nbank.requests.GetCustomerAccountsRequester;
+import nbank.models.CreateUserRequest;
+import nbank.requests.steps.AdminSteps;
+import nbank.requests.steps.UserSteps;
 import nbank.specs.RequestSpecs;
-import nbank.specs.ResponseSpecs;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,121 +16,52 @@ import static nbank.generators.RandomData.getDepositValue;
 
 public class DepositTest extends BaseTest {
 
-
     @ParameterizedTest
     @ValueSource(ints = {4999, 5000, 1})
     public void DepositToAccount(int expectedAmount) {
-        CreateUserResponse userResponse = createUser();
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 
-        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
+        AccountResponse account = UserSteps.createAccount(authAsUser);
+        UserSteps.depositMoney(authAsUser, account, expectedAmount);
+        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
 
-        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
-                .post(null)
-                .extract()
-                .as(AccountResponse.class);
-
-        //deposit money json
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(accountResponse.getId())
-                .balance(expectedAmount)
-                .build();
-
-        //deposit money request
-        new DepositMoneyRequester(
-                authAsCreatedUser,
-                ResponseSpecs.requestReturnsOK())
-                .post(depositRequest);
-
-        AccountResponse accountsResponse = new GetCustomerAccountsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .get()
-                .extract()
-                .as(AccountResponse[].class)[0];
-
-        Assertions.assertEquals(expectedAmount, accountsResponse.getTransactions().getFirst().getAmount());
+        Assertions.assertEquals(expectedAmount, accounts[0].getTransactions().getFirst().getAmount());
     }
 
     @ParameterizedTest
     @ValueSource(ints = {5001, -100, 0})
     public void depositProhibitedAmountOfMoney(int expectedAmount) {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 
-        CreateUserResponse userResponse = createUser();
+        AccountResponse account = UserSteps.createAccount(authAsUser);
+        UserSteps.depositInvalidSumOfMoney(authAsUser, account, expectedAmount);
+        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
 
-        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
-
-        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
-                .post(null)
-                .extract()
-                .as(AccountResponse.class);
-
-        //deposit money json
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(accountResponse.getId())
-                .balance(expectedAmount)
-                .build();
-
-        //deposit money request
-        new DepositMoneyRequester(
-                authAsCreatedUser,
-                ResponseSpecs.requestReturnsBadRequest())
-                .post(depositRequest);
-
-        AccountResponse accountsResponse = new GetCustomerAccountsRequester(authAsCreatedUser, ResponseSpecs.requestReturnsOK())
-                .get()
-                .extract()
-                .as(AccountResponse[].class)[0];
-
-        Assertions.assertEquals(0, accountsResponse.getTransactions().size());
+        Assertions.assertEquals(0, accounts[0].getTransactions().size());
     }
 
     @Test
     public void depositToNonExistingAccount() {
+        CreateUserRequest userRequest = AdminSteps.createUser();
+        RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 
-        CreateUserResponse userResponse = createUser();
+        AccountResponse account = UserSteps.createAccount(authAsUser);
+        account.setId(account.getId() + 1);
 
-        RequestSpecification authAsCreatedUser = RequestSpecs.authAsUser(userResponse.getUsername(), userResponse.getPassword());
-
-        AccountResponse accountResponse = new CreateAccountRequester(authAsCreatedUser, ResponseSpecs.entityWasCreated())
-                .post(null)
-                .extract()
-                .as(AccountResponse.class);
-
-        //deposit money json
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(accountResponse.getId() + 1)
-                .balance(getDepositValue())
-                .build();
-
-        //deposit money request
-        new DepositMoneyRequester(
-                authAsCreatedUser,
-                ResponseSpecs.requestReturnsForbidden())
-                .post(depositRequest);
+        UserSteps.depositToInvalidAccount(authAsUser, account, getDepositValue());
+        UserSteps.getCustomerAccounts(authAsUser);
     }
 
     @Test
     public void depositToSomeoneElseAccount() {
+        CreateUserRequest userRequest1 = AdminSteps.createUser();
+        RequestSpecification authAsUser1 = RequestSpecs.authAsUser(userRequest1.getUsername(), userRequest1.getPassword());
+        CreateUserRequest userRequest2 = AdminSteps.createUser();
+        RequestSpecification authAsUser2 = RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword());
 
-        CreateUserResponse userResponse1 = createUser();
-        CreateUserResponse userResponse2 = createUser();
-
-        RequestSpecification authAsCreatedUser1 = RequestSpecs.authAsUser(userResponse1.getUsername(), userResponse1.getPassword());
-        RequestSpecification authAsCreatedUser2 = RequestSpecs.authAsUser(userResponse2.getUsername(), userResponse2.getPassword());
-
-        AccountResponse accountResponse2 = new CreateAccountRequester(authAsCreatedUser2, ResponseSpecs.entityWasCreated())
-                .post(null)
-                .extract()
-                .as(AccountResponse.class);
-
-        //deposit money json
-        DepositMoneyRequest depositRequest = DepositMoneyRequest.builder()
-                .id(accountResponse2.getId())
-                .balance(getDepositValue())
-                .build();
-
-        //deposit money request
-        new DepositMoneyRequester(
-                authAsCreatedUser1,
-                ResponseSpecs.requestReturnsForbidden())
-                .post(depositRequest);
+        AccountResponse account2 = UserSteps.createAccount(authAsUser2);
+        UserSteps.depositToInvalidAccount(authAsUser1, account2, getDepositValue());
     }
 }
