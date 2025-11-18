@@ -22,4 +22,14 @@ public class LoginUserRequester extends Request<LoginUserRequest> {
                 .assertThat()
                 .spec(responseSpecification);
     }
+
+    @Override
+    public ValidatableResponse get() {
+        return null;
+    }
+
+    @Override
+    public ValidatableResponse put(LoginUserRequest model) {
+        return null;
+    }
 }
