@@ -1,7 +1,7 @@
-package nbank.secondPart;
+package nbank.api.secondPart;
 
 import io.restassured.specification.RequestSpecification;
-import nbank.BaseTest;
+import nbank.api.BaseTest;
 import nbank.generators.RandomData;
 import nbank.models.CreateUserRequest;
 import nbank.models.ProfileResponse;

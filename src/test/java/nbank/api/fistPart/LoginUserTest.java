@@ -1,6 +1,6 @@
-package nbank.fistPart;
+package nbank.api.fistPart;
 
-import nbank.BaseTest;
+import nbank.api.BaseTest;
 import nbank.models.CreateUserRequest;
 import nbank.models.CreateUserResponse;
 import nbank.models.LoginUserRequest;

@@ -21,4 +21,8 @@ public class RandomData {
     public static int getDepositValue() {
         return new Random().nextInt(4999) + 1;
     }
+
+    public static int getTransferValue() {
+        return new Random().nextInt(4999) + 1;
+    }
 }

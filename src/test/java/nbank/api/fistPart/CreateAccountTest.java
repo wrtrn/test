@@ -1,6 +1,6 @@
-package nbank.fistPart;
+package nbank.api.fistPart;
 
-import nbank.BaseTest;
+import nbank.api.BaseTest;
 import nbank.models.CreateUserRequest;
 import nbank.requests.skeleton.Endpoint;
 import nbank.requests.skeleton.requesters.CrudRequester;
