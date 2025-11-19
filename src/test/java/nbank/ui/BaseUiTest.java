@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeAll;
 
 import java.util.Map;
 
-public class BaseUiTest {
+public abstract class BaseUiTest {
 
     @BeforeAll
     public static void setupSelenoid() {
