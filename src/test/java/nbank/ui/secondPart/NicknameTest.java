@@ -2,10 +2,9 @@ package nbank.ui.secondPart;
 
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
-import nbank.models.CreateUserRequest;
-import nbank.requests.steps.AdminSteps;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.steps.AdminSteps;
 import nbank.ui.BaseUiTest;
-import nbank.ui.UserStepsUi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,7 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.openqa.selenium.Alert;
 
 import static com.codeborne.selenide.Selenide.*;
-import static nbank.generators.RandomData.getUsername;
+import static nbank.api.generators.RandomData.getUsername;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NicknameTest extends BaseUiTest {
@@ -24,7 +23,8 @@ public class NicknameTest extends BaseUiTest {
 
         CreateUserRequest user = AdminSteps.createUser();
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         Selenide.sleep(1000);
         String mainPageNameText = $x("//*[@class='welcome-text']").getText();
@@ -60,7 +60,8 @@ public class NicknameTest extends BaseUiTest {
 
         CreateUserRequest user = AdminSteps.createUser();
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         Selenide.sleep(1000);
         String mainPageNameText = $x("//*[@class='welcome-text']").getText();

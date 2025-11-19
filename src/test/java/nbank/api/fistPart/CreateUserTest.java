@@ -1,15 +1,15 @@
 package nbank.api.fistPart;
 
 import nbank.api.BaseTest;
-import nbank.generators.RandomModelGenerator;
-import nbank.models.CreateUserRequest;
-import nbank.models.CreateUserResponse;
-import nbank.models.comparison.ModelAssertions;
-import nbank.requests.skeleton.Endpoint;
-import nbank.requests.skeleton.requesters.CrudRequester;
-import nbank.requests.skeleton.requesters.ValidatedCrudRequester;
-import nbank.specs.RequestSpecs;
-import nbank.specs.ResponseSpecs;
+import nbank.api.generators.RandomModelGenerator;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.models.CreateUserResponse;
+import nbank.api.models.comparison.ModelAssertions;
+import nbank.api.requests.skeleton.Endpoint;
+import nbank.api.requests.skeleton.requesters.CrudRequester;
+import nbank.api.requests.skeleton.requesters.ValidatedCrudRequester;
+import nbank.api.specs.RequestSpecs;
+import nbank.api.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

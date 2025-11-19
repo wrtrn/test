@@ -3,14 +3,13 @@ package nbank.ui.secondPart;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
 import io.restassured.specification.RequestSpecification;
-import nbank.generators.RandomData;
-import nbank.models.AccountResponse;
-import nbank.models.CreateUserRequest;
-import nbank.requests.steps.AdminSteps;
-import nbank.requests.steps.UserSteps;
-import nbank.specs.RequestSpecs;
+import nbank.api.generators.RandomData;
+import nbank.api.models.AccountResponse;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.api.requests.steps.UserSteps;
+import nbank.api.specs.RequestSpecs;
 import nbank.ui.BaseUiTest;
-import nbank.ui.UserStepsUi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -21,7 +20,7 @@ import java.util.Arrays;
 
 import static com.codeborne.selenide.Selectors.byXpath;
 import static com.codeborne.selenide.Selenide.*;
-import static nbank.generators.RandomData.getTransferValue;
+import static nbank.api.generators.RandomData.getTransferValue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TransferTest extends BaseUiTest {
@@ -41,7 +40,8 @@ public class TransferTest extends BaseUiTest {
             UserSteps.depositMoney(authAsUser, account1, 5000);
         }
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
         $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
@@ -82,7 +82,8 @@ public class TransferTest extends BaseUiTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
         $(Selectors.byCssSelector(".btn-primary")).click();
@@ -108,7 +109,8 @@ public class TransferTest extends BaseUiTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
 
@@ -139,7 +141,8 @@ public class TransferTest extends BaseUiTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
 
@@ -170,7 +173,8 @@ public class TransferTest extends BaseUiTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
 
@@ -201,7 +205,8 @@ public class TransferTest extends BaseUiTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
 
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
 
@@ -236,7 +241,8 @@ public class TransferTest extends BaseUiTest {
             UserSteps.depositMoney(authAsUser, account1, 5000);
         }
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
         $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
@@ -270,7 +276,8 @@ public class TransferTest extends BaseUiTest {
             UserSteps.depositMoney(authAsUser, account1, 5000);
         }
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
         $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());

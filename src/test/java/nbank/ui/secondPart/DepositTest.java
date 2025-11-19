@@ -1,15 +1,15 @@
 package nbank.ui.secondPart;
 
 import com.codeborne.selenide.Selectors;
+import com.codeborne.selenide.Selenide;
 import io.restassured.specification.RequestSpecification;
-import nbank.generators.RandomData;
-import nbank.models.AccountResponse;
-import nbank.models.CreateUserRequest;
-import nbank.requests.steps.AdminSteps;
-import nbank.requests.steps.UserSteps;
-import nbank.specs.RequestSpecs;
+import nbank.api.generators.RandomData;
+import nbank.api.models.AccountResponse;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.api.requests.steps.UserSteps;
+import nbank.api.specs.RequestSpecs;
 import nbank.ui.BaseUiTest;
-import nbank.ui.UserStepsUi;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,11 +27,14 @@ public class DepositTest extends BaseUiTest {
     @ParameterizedTest
     @ValueSource(ints = {4999, 5000, 1})
     public void userCanDepositHisAccount(int depositValue) {
+
+
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
-
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
         $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
@@ -57,7 +60,8 @@ public class DepositTest extends BaseUiTest {
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
         $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
@@ -83,8 +87,8 @@ public class DepositTest extends BaseUiTest {
 
         //Баланс пополнился (проверка через бэкенд, что аккаунт 1 с балансом)
         //Баланс пополнился (проверка через бэкенд, что аккаунт 2 пустой)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el->el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el->el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -97,7 +101,8 @@ public class DepositTest extends BaseUiTest {
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
         $(Selectors.byCssSelector(".btn-primary")).click();
@@ -113,7 +118,8 @@ public class DepositTest extends BaseUiTest {
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
         $(Selectors.byCssSelector(".btn-primary")).click();
@@ -131,7 +137,8 @@ public class DepositTest extends BaseUiTest {
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
         $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
@@ -149,7 +156,8 @@ public class DepositTest extends BaseUiTest {
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
 
-        UserStepsUi.createUserAndLogin(user);
+        authAsUser(user);
+        Selenide.open("/dashboard");
         $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
         $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
         $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));

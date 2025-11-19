@@ -2,16 +2,16 @@ package nbank.api.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.api.BaseTest;
-import nbank.models.AccountResponse;
-import nbank.models.CreateUserRequest;
-import nbank.requests.steps.AdminSteps;
-import nbank.requests.steps.UserSteps;
-import nbank.specs.RequestSpecs;
+import nbank.api.models.AccountResponse;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.api.requests.steps.UserSteps;
+import nbank.api.specs.RequestSpecs;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static nbank.requests.steps.UserSteps.*;
+import static nbank.api.requests.steps.UserSteps.*;
 
 public class TransferTest extends BaseTest {
 
@@ -57,8 +57,8 @@ public class TransferTest extends BaseTest {
         CreateUserRequest userRequest2 = AdminSteps.createUser();
         RequestSpecification authAsUser2 = RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword());
 
-        AccountResponse account1 = UserSteps.createAccount(authAsUser1);
-        UserSteps.createAccount(authAsUser2);
+        AccountResponse account1 = createAccount(authAsUser1);
+        createAccount(authAsUser2);
 
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
 
@@ -77,8 +77,8 @@ public class TransferTest extends BaseTest {
         CreateUserRequest userRequest2 = AdminSteps.createUser();
         RequestSpecification authAsUser2 = RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword());
 
-        AccountResponse account1 = UserSteps.createAccount(authAsUser1);
-        AccountResponse account2 = UserSteps.createAccount(authAsUser2);
+        AccountResponse account1 = createAccount(authAsUser1);
+        AccountResponse account2 = createAccount(authAsUser2);
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 
@@ -102,8 +102,8 @@ public class TransferTest extends BaseTest {
         CreateUserRequest userRequest2 = AdminSteps.createUser();
         RequestSpecification authAsUser2 = RequestSpecs.authAsUser(userRequest2.getUsername(), userRequest2.getPassword());
 
-        AccountResponse account1 = UserSteps.createAccount(authAsUser1);
-        AccountResponse account2 = UserSteps.createAccount(authAsUser2);
+        AccountResponse account1 = createAccount(authAsUser1);
+        AccountResponse account2 = createAccount(authAsUser2);
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 

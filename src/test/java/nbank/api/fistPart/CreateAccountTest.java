@@ -1,12 +1,12 @@
 package nbank.api.fistPart;
 
 import nbank.api.BaseTest;
-import nbank.models.CreateUserRequest;
-import nbank.requests.skeleton.Endpoint;
-import nbank.requests.skeleton.requesters.CrudRequester;
-import nbank.requests.steps.AdminSteps;
-import nbank.specs.RequestSpecs;
-import nbank.specs.ResponseSpecs;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.skeleton.Endpoint;
+import nbank.api.requests.skeleton.requesters.CrudRequester;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.api.specs.RequestSpecs;
+import nbank.api.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
 
 public class CreateAccountTest extends BaseTest {

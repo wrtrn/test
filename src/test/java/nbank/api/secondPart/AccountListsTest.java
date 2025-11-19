@@ -2,11 +2,11 @@ package nbank.api.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.api.BaseTest;
-import nbank.models.AccountResponse;
-import nbank.models.CreateUserRequest;
-import nbank.requests.steps.AdminSteps;
-import nbank.requests.steps.UserSteps;
-import nbank.specs.RequestSpecs;
+import nbank.api.models.AccountResponse;
+import nbank.api.models.CreateUserRequest;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.api.requests.steps.UserSteps;
+import nbank.api.specs.RequestSpecs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
