@@ -1,7 +1,5 @@
 package nbank.ui.secondPart;
 
-import com.codeborne.selenide.Selectors;
-import com.codeborne.selenide.Selenide;
 import io.restassured.specification.RequestSpecification;
 import nbank.api.generators.RandomData;
 import nbank.api.models.AccountResponse;
@@ -10,17 +8,16 @@ import nbank.api.requests.steps.AdminSteps;
 import nbank.api.requests.steps.UserSteps;
 import nbank.api.specs.RequestSpecs;
 import nbank.ui.BaseUiTest;
+import nbank.ui.pages.BankAlert;
+import nbank.ui.pages.DepositMoney;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.openqa.selenium.Alert;
 
-import java.util.Arrays;
+import java.util.List;
 
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.switchTo;
-import static org.assertj.core.api.Assertions.assertThat;
+import static nbank.ui.pages.BankAlert.*;
 
 public class DepositTest extends BaseUiTest {
 
@@ -28,24 +25,24 @@ public class DepositTest extends BaseUiTest {
     @ValueSource(ints = {4999, 5000, 1})
     public void userCanDepositHisAccount(int depositValue) {
 
-
-
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
-        $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("✅ Successfully deposited $" + depositValue + " to account " + account.getAccountNumber() + "!");
+        new DepositMoney()
+                .open()
+                .selectParticularAccount(account)
+                .enterAmount(depositValue)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(DEPOSIT_MESSAGE_PART1.getMessage()
+                        + depositValue +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART2.getMessage() +
+                        account.getAccountNumber() +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART3.getMessage());
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
-        Assertions.assertEquals(depositValue, accounts[0].getBalance());
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
+        Assertions.assertEquals(depositValue, accounts.getFirst().getBalance());
     }
 
     @Test
@@ -56,25 +53,23 @@ public class DepositTest extends BaseUiTest {
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
-
-        long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
-        long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("✅ Successfully deposited $" + depositValue + " to account " + account1.getAccountNumber() + "!");
-        alert.accept();
+        new DepositMoney()
+                .open()
+                .selectParticularAccount(account1)
+                .enterAmount(depositValue)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(DEPOSIT_MESSAGE_PART1.getMessage()
+                        + depositValue +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART2.getMessage() +
+                        account1.getAccountNumber() +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART3.getMessage())
+                .open();
 
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        String account1Text = $(Selectors.byXpath("//option[@value='" + firstAccountNumber + "']")).getText();
-        String account2Text = $(Selectors.byXpath("//option[@value='" + secondAccountNumber + "']")).getText();
+
+        String account1Text = new DepositMoney().getSelectorAccountText(account1);
+        String account2Text = new DepositMoney().getSelectorAccountText(account2);
 
         Double account1Balance = Double.parseDouble(account1Text.substring(account1Text.indexOf('$') + 1, account1Text.indexOf(')')));
         Double account2Balance = Double.parseDouble(account2Text.substring(account2Text.indexOf('$') + 1, account2Text.indexOf(')')));
@@ -83,12 +78,12 @@ public class DepositTest extends BaseUiTest {
         Assertions.assertEquals(depositValue, account1Balance);
         Assertions.assertEquals(0, account2Balance);
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
 
         //Баланс пополнился (проверка через бэкенд, что аккаунт 1 с балансом)
         //Баланс пополнился (проверка через бэкенд, что аккаунт 2 пустой)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -99,17 +94,14 @@ public class DepositTest extends BaseUiTest {
 
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
-        AccountResponse account = UserSteps.createAccount(authAsUser);
-
+        UserSteps.createAccount(authAsUser);
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please select an account.");
+        new DepositMoney()
+                .open()
+                .enterAmount(depositValue)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(PLEASE_SELECT_AN_ACCOUNT.getMessage());
     }
 
     @Test
@@ -117,16 +109,13 @@ public class DepositTest extends BaseUiTest {
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please enter a valid amount.");
+        new DepositMoney()
+                .open()
+                .selectParticularAccount(account)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(PLEASE_ENTER_A_VALID_AMOUNT.getMessage());
     }
 
     @Test
@@ -136,17 +125,14 @@ public class DepositTest extends BaseUiTest {
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
-        $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please deposit less or equal to 5000$.");
+        new DepositMoney()
+                .open()
+                .selectParticularAccount(account)
+                .enterAmount(depositValue)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(PLEASE_DEPOSIT_LESS_THAN_5000.getMessage());
     }
 
     @ParameterizedTest
@@ -155,19 +141,16 @@ public class DepositTest extends BaseUiTest {
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account = UserSteps.createAccount(authAsUser);
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(Selectors.byXpath("//button[contains(text(),'Deposit Money')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account.getAccountNumber());
-        $(Selectors.byCssSelector(".deposit-input")).type(String.valueOf(depositValue));
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please enter a valid amount.");
+        new DepositMoney()
+                .open()
+                .selectParticularAccount(account)
+                .enterAmount(depositValue)
+                .clickDepositBtn()
+                .checkAlertMessageAndAccept(PLEASE_ENTER_A_VALID_AMOUNT.getMessage());
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
-        Assertions.assertEquals(0, accounts[0].getBalance());
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
+        Assertions.assertEquals(0, accounts.getFirst().getBalance());
     }
 }

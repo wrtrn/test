@@ -1,6 +1,5 @@
 package nbank.ui.secondPart;
 
-import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.Selenide;
 import io.restassured.specification.RequestSpecification;
 import nbank.api.generators.RandomData;
@@ -10,66 +9,62 @@ import nbank.api.requests.steps.AdminSteps;
 import nbank.api.requests.steps.UserSteps;
 import nbank.api.specs.RequestSpecs;
 import nbank.ui.BaseUiTest;
+import nbank.ui.pages.BankAlert;
+import nbank.ui.pages.MakeATransfer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.openqa.selenium.Alert;
 
-import java.util.Arrays;
+import java.util.List;
 
-import static com.codeborne.selenide.Selectors.byXpath;
-import static com.codeborne.selenide.Selenide.*;
 import static nbank.api.generators.RandomData.getTransferValue;
-import static org.assertj.core.api.Assertions.assertThat;
+import static nbank.ui.pages.BankAlert.*;
 
 public class TransferTest extends BaseUiTest {
 
     @Test
     public void userCanSendBalanceToAnotherAccount() {
+        MakeATransfer makeATransfer = new MakeATransfer();
+
         int transferValue = getTransferValue();
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
 
-        long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
-        long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
-
         for (int i = 0; i < 2; i++) {
             UserSteps.depositMoney(authAsUser, account1, 5000);
         }
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type(String.valueOf(transferValue));
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("✅ Successfully transferred $" + transferValue + " to account " + account2.getAccountNumber() + "!");
+        makeATransfer
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterRecipientAccountNumber(account2)
+                .enterAmount(transferValue)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(TRANSFER_MESSAGE_PART1.getMessage() + transferValue +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART2.getMessage() +
+                        account2.getAccountNumber() +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART3.getMessage());
 
         Selenide.refresh();
-        String account1Text = $(byXpath("//option[@value='" + firstAccountNumber + "']")).getText();
-        String account2Text = $(byXpath("//option[@value='" + secondAccountNumber + "']")).getText();
 
-        Double account1Balance = Double.parseDouble(account1Text.substring(account1Text.indexOf('$') + 1, account1Text.indexOf(')')));
-        Double account2Balance = Double.parseDouble(account2Text.substring(account2Text.indexOf('$') + 1, account2Text.indexOf(')')));
+        Double account1Balance = makeATransfer.getSelectorAccountBalance(account1);
+        Double account2Balance = makeATransfer.getSelectorAccountBalance(account2);
 
         //В списке Choose an account на странице отображаются верные балансы аккаунтов
         Assertions.assertEquals(10000 - transferValue, account1Balance);
         Assertions.assertEquals(transferValue, account2Balance);
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(10000 - transferValue, account1response.getBalance());
         Assertions.assertEquals(transferValue, account2response.getBalance());
     }
@@ -77,26 +72,25 @@ public class TransferTest extends BaseUiTest {
     @Test
     public void userCannotTransferWithEmptyFields() {
         int depositValue = RandomData.getDepositValue();
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
         authAsUser(user);
-        Selenide.open("/dashboard");
 
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
+        new MakeATransfer()
+                .open()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(PLEASE_FILL_ALL_FIELDS_AND_CONFIRM.getMessage());
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please fill all fields and confirm.");
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -104,31 +98,28 @@ public class TransferTest extends BaseUiTest {
     @Test
     public void userCannotTransferWithEmptyAccount() {
         int depositValue = RandomData.getDepositValue();
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
         authAsUser(user);
-        Selenide.open("/dashboard");
 
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
+        new MakeATransfer()
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterAmount(1)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(PLEASE_FILL_ALL_FIELDS_AND_CONFIRM.getMessage());
 
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type("1");
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please fill all fields and confirm.");
-
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -136,63 +127,61 @@ public class TransferTest extends BaseUiTest {
     @Test
     public void userCanTransferWithEmptyRecipientName() {
         int depositValue = RandomData.getDepositValue();
+        int transferValue = 1;
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
         authAsUser(user);
-        Selenide.open("/dashboard");
 
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
+        new MakeATransfer()
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientAccountNumber(account2)
+                .enterAmount(transferValue)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(TRANSFER_MESSAGE_PART1.getMessage() + transferValue +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART2.getMessage() +
+                        account2.getAccountNumber() +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART3.getMessage());
 
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type("1");
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("✅ Successfully transferred $" + 1 + " to account " + account2.getAccountNumber() + "!");
-
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
-        Assertions.assertEquals(depositValue - 1, account1response.getBalance());
-        Assertions.assertEquals(1, account2response.getBalance());
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        Assertions.assertEquals(depositValue - transferValue, account1response.getBalance());
+        Assertions.assertEquals(transferValue, account2response.getBalance());
     }
 
     @Test
     public void userCannotTransferWithEmptyAmount() {
         int depositValue = RandomData.getDepositValue();
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
         authAsUser(user);
-        Selenide.open("/dashboard");
 
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
+        new MakeATransfer()
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterRecipientAccountNumber(account2)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(PLEASE_FILL_ALL_FIELDS_AND_CONFIRM.getMessage());
 
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please fill all fields and confirm.");
-
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -200,31 +189,28 @@ public class TransferTest extends BaseUiTest {
     @Test
     public void userCannotTransferWithEmptyConfirmCheck() {
         int depositValue = RandomData.getDepositValue();
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
         AccountResponse account2 = UserSteps.createAccount(authAsUser);
         UserSteps.depositMoney(authAsUser, account1, depositValue);
         authAsUser(user);
-        Selenide.open("/dashboard");
 
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
+        new MakeATransfer()
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterRecipientAccountNumber(account2)
+                .enterAmount(1)
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(PLEASE_FILL_ALL_FIELDS_AND_CONFIRM.getMessage());
 
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type("1");
-        $(Selectors.byCssSelector(".btn-primary")).click();
-
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Please fill all fields and confirm.");
-
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(depositValue, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -240,26 +226,23 @@ public class TransferTest extends BaseUiTest {
         for (int i = 0; i < 3; i++) {
             UserSteps.depositMoney(authAsUser, account1, 5000);
         }
-
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type(String.valueOf(transferValue));
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("❌ Error: Invalid transfer: insufficient funds or invalid accounts");
+        new MakeATransfer()
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterRecipientAccountNumber(account2)
+                .enterAmount(transferValue)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(INSUFFICIENT_FUNDS_OR_INVALID_ACCOUNTS.getMessage());
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
         Assertions.assertEquals(15000, account1response.getBalance());
         Assertions.assertEquals(0, account2response.getBalance());
     }
@@ -267,6 +250,8 @@ public class TransferTest extends BaseUiTest {
     @Test
     public void userCanSendBalanceToAnotherAccountUsingTransferAgain() {
         int transferValue = getTransferValue();
+        MakeATransfer makeATransfer = new MakeATransfer();
+
         CreateUserRequest user = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(user.getUsername(), user.getPassword());
         AccountResponse account1 = UserSteps.createAccount(authAsUser);
@@ -277,33 +262,31 @@ public class TransferTest extends BaseUiTest {
         }
 
         authAsUser(user);
-        Selenide.open("/dashboard");
-        $(byXpath("//button[contains(text(),'Make a Transfer')]")).click();
-        $(Selectors.byCssSelector(".account-selector")).selectOptionContainingText(account1.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient name']")).type(RandomData.getUsername());
-        $(Selectors.byCssSelector("[placeholder='Enter recipient account number']")).type(account2.getAccountNumber());
-        $(Selectors.byCssSelector("[placeholder='Enter amount']")).type(String.valueOf(transferValue));
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-primary")).click();
 
-        Alert alert = switchTo().alert();
-        String alertText = alert.getText();
-        assertThat(alertText).contains("✅ Successfully transferred $" + transferValue + " to account " + account1.getAccountNumber() + "!");
+        makeATransfer
+                .open()
+                .selectAccountFromSelector(account1)
+                .enterRecipientName(RandomData.getUsername())
+                .enterRecipientAccountNumber(account2)
+                .enterAmount(transferValue)
+                .checkConfirmation()
+                .clickDepositButton()
+                .checkAlertMessageAndAccept(TRANSFER_MESSAGE_PART1.getMessage() + transferValue +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART2.getMessage() +
+                        account2.getAccountNumber() +
+                        BankAlert.DEPOSIT_TRANSFER_MESSAGE_PART3.getMessage());
 
         Selenide.refresh();
-        $(byXpath("//button[contains(text(),'Transfer Again')]")).click();
-        $(byXpath("//span[contains(., 'TRANSFER_OUT')]/following-sibling::button")).click();
-        $(Selectors.byCssSelector("select.form-control")).selectOptionContainingText(account2.getAccountNumber());
-        $(byXpath("//label[contains(., 'Amount:')]/following-sibling::input")).type(String.valueOf(transferValue));
-        $(Selectors.byCssSelector("#confirmCheck")).click();
-        $(Selectors.byCssSelector(".btn-success")).click();
 
-        AccountResponse[] accounts = UserSteps.getCustomerAccounts(authAsUser);
+        makeATransfer
+                .transferOutAgain(account1, transferValue);
+
+        List<AccountResponse> accounts = new UserSteps(user.getUsername(), user.getPassword()).getAllAccounts();
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 1 уменьшился)
         //Баланс пополнился (проверка через бэкенд, что баланс аккаунта 2 увеличился)
-        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
-        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
-        Assertions.assertEquals(20000 - transferValue*2, account1response.getBalance());
-        Assertions.assertEquals(transferValue*2, account2response.getBalance());
+        AccountResponse account1response = accounts.stream().filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = accounts.stream().filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+        Assertions.assertEquals(20000 - transferValue * 2, account1response.getBalance());
+        Assertions.assertEquals(transferValue * 2, account2response.getBalance());
     }
 }
