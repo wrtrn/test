@@ -5,6 +5,7 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.conditions.Visible;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.requests.steps.AdminSteps;
+import nbank.common.annotations.UserSession;
 import nbank.ui.BaseUiTest;
 import nbank.ui.pages.EditProfile;
 import nbank.ui.pages.UserDashboard;
@@ -19,14 +20,12 @@ import static nbank.ui.pages.BankAlert.PLEASE_ENTER_A_VALID_NAME;
 
 public class NicknameTest extends BaseUiTest {
 
+    @UserSession
     @Test
     public void userCanChangeNickname() {
         UserDashboard userDashboard = new UserDashboard();
 
         String newName = getUsername() + " " + getUsername();
-
-        CreateUserRequest user = AdminSteps.createUser();
-        authAsUser(user);
 
         userDashboard.open().getRightCornerNameText().shouldBe(Condition.visible);
 
@@ -49,16 +48,12 @@ public class NicknameTest extends BaseUiTest {
         Assertions.assertEquals(newName, rightCornerNameText);
     }
 
-
+    @UserSession
     @ParameterizedTest
     @ValueSource(strings = {"ivan", "", "1234", "$$"})
     public void userCanNotChangeNicknameToInvalid(String newName) {
         EditProfile editProfile = new EditProfile();
         UserDashboard userDashboard = new UserDashboard();
-
-        CreateUserRequest user = AdminSteps.createUser();
-
-        authAsUser(user);
 
         editProfile.open();
         Selenide.sleep(1000);

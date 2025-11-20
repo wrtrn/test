@@ -1,60 +1,50 @@
 package nbank.ui.firstPart;
 
-import nbank.api.BaseTest;
 import nbank.api.generators.RandomModelGenerator;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.models.CreateUserResponse;
 import nbank.api.models.comparison.ModelAssertions;
-import nbank.api.requests.skeleton.Endpoint;
-import nbank.api.requests.skeleton.requesters.CrudRequester;
-import nbank.api.requests.skeleton.requesters.ValidatedCrudRequester;
-import nbank.api.specs.RequestSpecs;
-import nbank.api.specs.ResponseSpecs;
+import nbank.api.requests.steps.AdminSteps;
+import nbank.common.annotations.AdminSession;
+import nbank.ui.BaseUiTest;
+import nbank.ui.pages.AdminPanel;
+import nbank.ui.pages.BankAlert;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.stream.Stream;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CreateUserTest extends BaseTest {
+public class CreateUserTest extends BaseUiTest {
+
     @Test
-    public void adminCanCreateUserWithCorrectData() {
-        CreateUserRequest createUserRequest =
-                RandomModelGenerator.generate(CreateUserRequest.class);
+    @AdminSession
+    public void adminCanCreateUserTest() {
+        CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
 
-        CreateUserResponse createUserResponse = new ValidatedCrudRequester<CreateUserResponse>
-                (RequestSpecs.adminSpec(),
-                        Endpoint.ADMIN_USER,
-                        ResponseSpecs.entityWasCreated())
-                .post(createUserRequest);
+        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+                .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
+                .getAllUsers().stream().anyMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
 
-        ModelAssertions.assertThatModels(createUserRequest, createUserResponse).match();
+        CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
+                .filter(user -> user.getUsername().equals(newUser.getUsername()))
+                .findFirst().get();
+
+        ModelAssertions.assertThatModels(newUser, createdUser).match();
     }
 
-    public static Stream<Arguments> userInvalidData() {
-        return Stream.of(
-                // username field validation
-                Arguments.of("   ", "Password33$", "USER", "username", "Username cannot be blank"),
-                Arguments.of("ab", "Password33$", "USER", "username", "Username must be between 3 and 15 characters"),
-                Arguments.of("abc$", "Password33$", "USER", "username", "Username must contain only letters, digits, dashes, underscores, and dots"),
-                Arguments.of("abc%", "Password33$", "USER", "username", "Username must contain only letters, digits, dashes, underscores, and dots")
-        );
+    @Test
+    @AdminSession
+    public void adminCannotCreateUserWithInvalidDataTest() {
+        CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
+        newUser.setUsername("a");
 
-    }
+        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+                .checkAlertMessageAndAccept(BankAlert.USERNAME_MUST_BE_BETWEEN_3_AND_15_CHARACTERS.getMessage())
+                .getAllUsers().stream().noneMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
 
-    @MethodSource("userInvalidData")
-    @ParameterizedTest
-    public void adminCanNotCreateUserWithInvalidData(String username, String password, String role, String errorKey, String errorValue) {
-        CreateUserRequest createUserRequest = CreateUserRequest.builder()
-                .username(username)
-                .password(password)
-                .role(role)
-                .build();
+        long usersWithSameUsernameAsNewUser = AdminSteps.getAllUsers().stream()
+                .filter(user -> user.getUsername().equals(newUser.getUsername())).count();
 
-        new CrudRequester(RequestSpecs.adminSpec(),
-                Endpoint.ADMIN_USER,
-                ResponseSpecs.requestReturnsBadRequest(errorKey, errorValue))
-                .post(createUserRequest);
+        assertThat(usersWithSameUsernameAsNewUser).isZero();
     }
 }

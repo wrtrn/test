@@ -1,42 +1,32 @@
 package nbank.ui.firstPart;
 
 
-import nbank.api.BaseTest;
+import com.codeborne.selenide.Condition;
 import nbank.api.models.CreateUserRequest;
-import nbank.api.models.CreateUserResponse;
-import nbank.api.models.LoginUserRequest;
-import nbank.api.requests.skeleton.Endpoint;
-import nbank.api.requests.skeleton.requesters.CrudRequester;
-import nbank.api.requests.skeleton.requesters.ValidatedCrudRequester;
 import nbank.api.requests.steps.AdminSteps;
-import nbank.api.specs.RequestSpecs;
-import nbank.api.specs.ResponseSpecs;
-import org.hamcrest.Matchers;
+import nbank.common.annotations.Browsers;
+import nbank.ui.BaseUiTest;
+import nbank.ui.pages.AdminPanel;
+import nbank.ui.pages.LoginPage;
+import nbank.ui.pages.UserDashboard;
 import org.junit.jupiter.api.Test;
 
-public class LoginUserTest extends BaseTest {
-
+public class LoginUserTest extends BaseUiTest {
     @Test
-    public void adminCanGenerateAuthTokenTest() {
-        LoginUserRequest userRequest = LoginUserRequest.builder()
-                .username("admin")
-                .password("admin")
-                .build();
+    @Browsers({"chrome"})
+    public void adminCanLoginWithCorrectDataTest() {
+        CreateUserRequest admin = CreateUserRequest.getAdmin();
 
-        new ValidatedCrudRequester<CreateUserResponse>(RequestSpecs.unauthSpec(),
-                Endpoint.LOGIN,
-                ResponseSpecs.requestReturnsOK())
-                .post(userRequest);
+        new LoginPage().open().login(admin.getUsername(), admin.getPassword())
+                .getPage(AdminPanel.class).getAdminPanelText().shouldBe(Condition.visible);
     }
 
     @Test
-    public void userCanGenerateAuthTokenTest() {
-        CreateUserRequest userRequest = AdminSteps.createUser();
+    public void userCanLoginWithCorrectDataTest() {
+        CreateUserRequest user = AdminSteps.createUser();
 
-        new CrudRequester(RequestSpecs.unauthSpec(),
-                Endpoint.LOGIN,
-                ResponseSpecs.requestReturnsOK())
-                .post(LoginUserRequest.builder().username(userRequest.getUsername()).password(userRequest.getPassword()).build())
-                .header("Authorization", Matchers.notNullValue());
+        new LoginPage().open().login(user.getUsername(), user.getPassword())
+                .getPage(UserDashboard.class).getWelcomeText()
+                .shouldBe(Condition.visible).shouldHave(Condition.text("Welcome, noname!"));
     }
 }

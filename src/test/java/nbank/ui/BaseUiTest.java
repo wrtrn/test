@@ -6,9 +6,7 @@ import nbank.api.BaseTest;
 import nbank.api.configs.Config;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.specs.RequestSpecs;
-import nbank.common.extensions.AdminSessionExtension;
-import nbank.common.extensions.BrowserMatchExtension;
-import nbank.common.extensions.UserSessionExtension;
+import nbank.common.extensions.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,6 +17,8 @@ import static com.codeborne.selenide.Selenide.executeJavaScript;
 @ExtendWith(AdminSessionExtension.class)
 @ExtendWith(UserSessionExtension.class)
 @ExtendWith(BrowserMatchExtension.class)
+@ExtendWith(AccountCreationExtension.class)
+@ExtendWith(DepositMoneyExtension.class)
 public abstract class BaseUiTest extends BaseTest {
     @BeforeAll
     public static void setupSelenoid() {
