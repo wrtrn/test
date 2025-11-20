@@ -1,4 +1,4 @@
-package nbank.ui.pages.elements;
+package nbank.ui.elements;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;

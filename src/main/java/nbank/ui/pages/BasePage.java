@@ -6,7 +6,7 @@ import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.specs.RequestSpecs;
-import nbank.ui.pages.elements.BaseElement;
+import nbank.ui.elements.BaseElement;
 import org.openqa.selenium.Alert;
 
 import java.util.List;
