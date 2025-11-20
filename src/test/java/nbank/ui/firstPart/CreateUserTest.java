@@ -1,64 +1,60 @@
 package nbank.ui.firstPart;
 
-
-import com.codeborne.selenide.Condition;
+import nbank.api.BaseTest;
 import nbank.api.generators.RandomModelGenerator;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.models.CreateUserResponse;
 import nbank.api.models.comparison.ModelAssertions;
-import nbank.api.requests.steps.AdminSteps;
-import nbank.ui.BaseUiTest;
-import nbank.ui.pages.AdminPanel;
-import nbank.ui.pages.BankAlert;
+import nbank.api.requests.skeleton.Endpoint;
+import nbank.api.requests.skeleton.requesters.CrudRequester;
+import nbank.api.requests.skeleton.requesters.ValidatedCrudRequester;
+import nbank.api.specs.RequestSpecs;
+import nbank.api.specs.ResponseSpecs;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.stream.Stream;
 
-public class CreateUserTest extends BaseUiTest {
-
+public class CreateUserTest extends BaseTest {
     @Test
-    public void adminCanCreateUserTest() {
-        // ШАГ 1: админ залогинился в банке
-        CreateUserRequest admin = CreateUserRequest.getAdmin();
+    public void adminCanCreateUserWithCorrectData() {
+        CreateUserRequest createUserRequest =
+                RandomModelGenerator.generate(CreateUserRequest.class);
 
-        authAsUser(admin);
+        CreateUserResponse createUserResponse = new ValidatedCrudRequester<CreateUserResponse>
+                (RequestSpecs.adminSpec(),
+                        Endpoint.ADMIN_USER,
+                        ResponseSpecs.entityWasCreated())
+                .post(createUserRequest);
 
-        // ШАГ 2: админ создает юзера в банке
-        CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
-
-        new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
-                .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
-                .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldBe(Condition.visible);
-
-        // ШАГ 5: проверка, что юзер создан на API
-
-        CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
-                .filter(user -> user.getUsername().equals(newUser.getUsername()))
-                .findFirst().get();
-
-        ModelAssertions.assertThatModels(newUser, createdUser).match();
+        ModelAssertions.assertThatModels(createUserRequest, createUserResponse).match();
     }
 
-    @Test
-    public void adminCannotCreateUserWithInvalidDataTest() {
-        // ШАГ 1: админ залогинился в банке
-        CreateUserRequest admin = CreateUserRequest.getAdmin();
+    public static Stream<Arguments> userInvalidData() {
+        return Stream.of(
+                // username field validation
+                Arguments.of("   ", "Password33$", "USER", "username", "Username cannot be blank"),
+                Arguments.of("ab", "Password33$", "USER", "username", "Username must be between 3 and 15 characters"),
+                Arguments.of("abc$", "Password33$", "USER", "username", "Username must contain only letters, digits, dashes, underscores, and dots"),
+                Arguments.of("abc%", "Password33$", "USER", "username", "Username must contain only letters, digits, dashes, underscores, and dots")
+        );
 
-        authAsUser(admin);
+    }
 
-        // ШАГ 2: админ создает юзера в банке
-        CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
-        newUser.setUsername("a");
+    @MethodSource("userInvalidData")
+    @ParameterizedTest
+    public void adminCanNotCreateUserWithInvalidData(String username, String password, String role, String errorKey, String errorValue) {
+        CreateUserRequest createUserRequest = CreateUserRequest.builder()
+                .username(username)
+                .password(password)
+                .role(role)
+                .build();
 
-        new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
-                .checkAlertMessageAndAccept(BankAlert.USERNAME_MUST_BE_BETWEEN_3_AND_15_CHARACTERS.getMessage())
-                .getAllUsers().findBy(Condition.exactText(newUser.getUsername() + "\nUSER")).shouldNotBe(Condition.exist);
-
-        // ШАГ 5: проверка, что юзер НЕ создан на API
-
-        long usersWithSameUsernameAsNewUser = AdminSteps.getAllUsers().stream()
-                .filter(user -> user.getUsername().equals(newUser.getUsername())).count();
-
-        assertThat(usersWithSameUsernameAsNewUser).isZero();
+        new CrudRequester(RequestSpecs.adminSpec(),
+                Endpoint.ADMIN_USER,
+                ResponseSpecs.requestReturnsBadRequest(errorKey, errorValue))
+                .post(createUserRequest);
     }
 }
