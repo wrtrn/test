@@ -7,8 +7,10 @@ import nbank.api.models.comparison.ModelAssertions;
 import nbank.api.requests.steps.AdminSteps;
 import nbank.common.annotations.AdminSession;
 import nbank.ui.BaseUiTest;
+import nbank.ui.elements.UserBage;
 import nbank.ui.pages.AdminPanel;
 import nbank.ui.pages.BankAlert;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -21,9 +23,13 @@ public class CreateUserTest extends BaseUiTest {
     public void adminCanCreateUserTest() {
         CreateUserRequest newUser = RandomModelGenerator.generate(CreateUserRequest.class);
 
-        assertTrue(new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
+        UserBage newUserBage = new AdminPanel().open().createUser(newUser.getUsername(), newUser.getPassword())
                 .checkAlertMessageAndAccept(BankAlert.USER_CREATED_SUCCESSFULLY.getMessage())
-                .getAllUsers().stream().anyMatch(userBage -> userBage.getUsername().equals(newUser.getUsername())));
+                .findUserByUsername(newUser.getUsername());
+
+        Assertions.assertThat(newUserBage)
+                .as("UserBage should exist on Dashboard after user creation").isNotNull();
+
 
         CreateUserResponse createdUser = AdminSteps.getAllUsers().stream()
                 .filter(user -> user.getUsername().equals(newUser.getUsername()))
