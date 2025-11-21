@@ -8,6 +8,7 @@ import nbank.api.models.CreateUserRequest;
 import nbank.api.specs.RequestSpecs;
 import nbank.ui.elements.BaseElement;
 import org.openqa.selenium.Alert;
+import org.openqa.selenium.NoAlertPresentException;
 
 import java.util.List;
 import java.util.function.Function;
@@ -29,6 +30,16 @@ public abstract class BasePage<T extends BasePage> {
     public <T extends BasePage> T getPage(Class<T> pageClass) { return Selenide.page(pageClass); }
 
     public T checkAlertMessageAndAccept(String bankAlert) {
+
+        Selenide.Wait().until(webDriver -> {
+            try {
+                webDriver.switchTo().alert();
+                return true;
+            } catch (NoAlertPresentException e) {
+                return false;
+            }
+        });
+
         Alert alert = switchTo().alert();
         assertThat(alert.getText()).contains(bankAlert);
         alert.accept();

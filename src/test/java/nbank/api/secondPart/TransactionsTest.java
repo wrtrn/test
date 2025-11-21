@@ -11,6 +11,8 @@ import nbank.api.specs.RequestSpecs;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static nbank.api.requests.steps.UserSteps.getAccountsTransactions;
 
 public class TransactionsTest extends BaseTest {
@@ -34,10 +36,11 @@ public class TransactionsTest extends BaseTest {
         UserSteps.transferMoney(authAsUser1, 50, firstAccountNumber, secondAccountNumber);
 
         Transaction[] transactions = getAccountsTransactions(authAsUser1, firstAccountNumber);
-        softly.assertThat(500).isEqualTo(transactions[0].getAmount());
-        softly.assertThat("DEPOSIT").isEqualTo(transactions[0].getType());
-        softly.assertThat(50).isEqualTo(transactions[1].getAmount());
-        softly.assertThat("TRANSFER_OUT").isEqualTo(transactions[1].getType());
+        double depositSum = Arrays.stream(transactions).filter(tr->tr.getType().equals("DEPOSIT")).findFirst().orElse(null).getAmount();
+        double transferOutSum = Arrays.stream(transactions).filter(tr->tr.getType().equals("TRANSFER_OUT")).findFirst().orElse(null).getAmount();
+
+        softly.assertThat(500.0).isEqualTo(depositSum);
+        softly.assertThat(50.0).isEqualTo(transferOutSum);
     }
 
     @Test

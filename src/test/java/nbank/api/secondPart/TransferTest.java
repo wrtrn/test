@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.Arrays;
+
 import static nbank.api.requests.steps.UserSteps.*;
 
 public class TransferTest extends BaseTest {
@@ -44,10 +46,13 @@ public class TransferTest extends BaseTest {
 
         transferMoney(authAsUser, 50, firstAccountNumber, secondAccountNumber);
 
-        AccountResponse[] accountsResponse = getCustomerAccounts(authAsUser);
+        AccountResponse[] accounts = getCustomerAccounts(authAsUser);
 
-        softly.assertThat(accountsResponse[0].getBalance()).isEqualTo(450);
-        softly.assertThat(accountsResponse[1].getBalance()).isEqualTo(50);
+        AccountResponse account1response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account1.getAccountNumber())).findFirst().orElse(null);
+        AccountResponse account2response = Arrays.stream(accounts).filter(el -> el.getAccountNumber().equals(account2.getAccountNumber())).findFirst().orElse(null);
+
+        softly.assertThat(account1response.getBalance()).isEqualTo(450);
+        softly.assertThat(account2response.getBalance()).isEqualTo(50);
     }
 
     @Test
