@@ -2,9 +2,11 @@ package nbank.api.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.api.BaseTest;
+import nbank.generators.RandomData;
 import nbank.api.models.AccountResponse;
 import nbank.api.models.CreateUserRequest;
 import nbank.api.models.Transaction;
+import nbank.models.TransactionsResponse;
 import nbank.api.requests.steps.AdminSteps;
 import nbank.api.requests.steps.UserSteps;
 import nbank.api.specs.RequestSpecs;
@@ -19,6 +21,7 @@ public class TransactionsTest extends BaseTest {
 
     @Test
     public void userCanSeeTransactionForHisAccount() {
+        int depositValue = RandomData.getDepositForFutureTransfer();
 
         CreateUserRequest userRequest1 = AdminSteps.createUser();
         RequestSpecification authAsUser1 = RequestSpecs.authAsUser(userRequest1.getUsername(), userRequest1.getPassword());
@@ -28,19 +31,19 @@ public class TransactionsTest extends BaseTest {
         AccountResponse account1 = UserSteps.createAccount(authAsUser1);
         AccountResponse account2 = UserSteps.createAccount(authAsUser2);
 
-        UserSteps.depositMoney(authAsUser1, account1, 500);
+        UserSteps.depositMoney(authAsUser1, account1, depositValue);
 
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 
-        UserSteps.transferMoney(authAsUser1, 50, firstAccountNumber, secondAccountNumber);
+        UserSteps.transferMoney(authAsUser1, depositValue-50, firstAccountNumber, secondAccountNumber);
 
-        Transaction[] transactions = getAccountsTransactions(authAsUser1, firstAccountNumber);
-        double depositSum = Arrays.stream(transactions).filter(tr->tr.getType().equals("DEPOSIT")).findFirst().orElse(null).getAmount();
-        double transferOutSum = Arrays.stream(transactions).filter(tr->tr.getType().equals("TRANSFER_OUT")).findFirst().orElse(null).getAmount();
+        TransactionsResponse transactions = getAccountsTransactions(authAsUser1, firstAccountNumber);
+        double depositSum = Arrays.stream(transactions.getTransactions()).filter(tr->tr.getType().equals("DEPOSIT")).findFirst().orElse(null).getAmount();
+        double transferOutSum = Arrays.stream(transactions.getTransactions()).filter(tr->tr.getType().equals("TRANSFER_OUT")).findFirst().orElse(null).getAmount();
 
-        softly.assertThat(500.0).isEqualTo(depositSum);
-        softly.assertThat(50.0).isEqualTo(transferOutSum);
+        softly.assertThat(depositValue).isEqualTo(depositSum);
+        softly.assertThat(depositValue-50).isEqualTo(transferOutSum);
     }
 
     @Test
