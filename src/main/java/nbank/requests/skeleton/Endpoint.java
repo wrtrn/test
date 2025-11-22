@@ -48,10 +48,39 @@ public enum Endpoint {
             TransferMoney.class,
             TransferMoney.class
     ),
+
+    ACCOUNTS_ID_TRANSACTIONS(
+            "/accounts/{accountId}/transactions",
+            null,
+            TransactionsResponse.class
+    ),
     ;
 
 
     private final String url;
     private final Class<? extends BaseModel> requestModel;
     private final Class<? extends BaseModel> responseModel;
+
+    public String getUrl(Object... args) {
+        if (args == null || args.length == 0) {
+            return url;
+        }
+
+        boolean hasNonNull = false;
+        for (Object arg : args) {
+            if (arg != null) {
+                hasNonNull = true;
+                break;
+            }
+        }
+        if (!hasNonNull) {
+            return url;
+        }
+
+        String result = url;
+        for (Object arg : args) {
+            result = result.replaceFirst("\\{[^/]+}", arg.toString());
+        }
+        return result;
+    }
 }

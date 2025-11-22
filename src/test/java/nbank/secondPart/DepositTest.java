@@ -18,7 +18,7 @@ public class DepositTest extends BaseTest {
 
     @ParameterizedTest
     @ValueSource(ints = {4999, 5000, 1})
-    public void DepositToAccount(int expectedAmount) {
+    public void depositToAccount(int expectedAmount) {
         CreateUserRequest userRequest = AdminSteps.createUser();
         RequestSpecification authAsUser = RequestSpecs.authAsUser(userRequest.getUsername(), userRequest.getPassword());
 

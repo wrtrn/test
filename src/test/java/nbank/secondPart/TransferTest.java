@@ -2,6 +2,7 @@ package nbank.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.BaseTest;
+import nbank.generators.RandomData;
 import nbank.models.AccountResponse;
 import nbank.models.CreateUserRequest;
 import nbank.requests.steps.AdminSteps;
@@ -70,8 +71,8 @@ public class TransferTest extends BaseTest {
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {10000, 9999, 1})
-    public void userCanTransferToAnotherUser(int amount) {
+    @ValueSource(doubles = {10000.01, 9999.99, 0.01})
+    public void userCanTransferToAnotherUser(double amount) {
         CreateUserRequest userRequest1 = AdminSteps.createUser();
         RequestSpecification authAsUser1 = RequestSpecs.authAsUser(userRequest1.getUsername(), userRequest1.getPassword());
         CreateUserRequest userRequest2 = AdminSteps.createUser();
@@ -97,6 +98,7 @@ public class TransferTest extends BaseTest {
     @ParameterizedTest
     @ValueSource(ints = {10001, 0, -400})
     public void userCanNotTransferToAnotherUserInvalidAmountOfMoney(int amount) {
+        int deposit = RandomData.getDepositValue();
         CreateUserRequest userRequest1 = AdminSteps.createUser();
         RequestSpecification authAsUser1 = RequestSpecs.authAsUser(userRequest1.getUsername(), userRequest1.getPassword());
         CreateUserRequest userRequest2 = AdminSteps.createUser();
@@ -107,16 +109,14 @@ public class TransferTest extends BaseTest {
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 
-        for (int i = 0; i < 2; i++) {
-            UserSteps.depositMoney(authAsUser1, account1, 5000);
-        }
+            UserSteps.depositMoney(authAsUser1, account1, deposit);
         String errorResponseBody = transferMoneyBadRequest(authAsUser1, amount, firstAccountNumber, secondAccountNumber);
 
         softly.assertThat(errorResponseBody)
                 .isEqualTo("Invalid transfer: insufficient funds or invalid accounts");
 
         AccountResponse[] responseAccountsUser1 = getCustomerAccounts(authAsUser1);
-        softly.assertThat(responseAccountsUser1[0].getBalance()).isEqualTo(10000);
+        softly.assertThat(responseAccountsUser1[0].getBalance()).isEqualTo(deposit);
 
         AccountResponse[] responseAccountsUser2 = getCustomerAccounts(authAsUser2);
         softly.assertThat(responseAccountsUser2[0].getBalance()).isEqualTo(0);

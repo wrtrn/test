@@ -29,10 +29,10 @@ public class CrudRequester extends HttpRequest implements CrudEndpointInterface 
 
     @Override
     public ValidatableResponse get(long id) {
-        String params = id == 0 ? "" : String.valueOf(id);
+        Long params = id == 0 ? null : id;
         return given()
                 .spec(requestSpecification)
-                .get(endpoint.getUrl() + params)
+                .get(endpoint.getUrl(params))
                 .then()
                 .assertThat()
                 .spec(responseSpecification);

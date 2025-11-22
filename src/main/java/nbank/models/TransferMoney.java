@@ -14,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class TransferMoney extends BaseModel {
     private long senderAccountId;
     private long receiverAccountId;
-    private int amount;
+    private double amount;
     private String message;
 }

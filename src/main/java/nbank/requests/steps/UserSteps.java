@@ -6,7 +6,6 @@ import nbank.requests.skeleton.requesters.CrudRequester;
 import nbank.requests.skeleton.requesters.ValidatedCrudRequester;
 import nbank.specs.ResponseSpecs;
 
-import static io.restassured.RestAssured.given;
 import static nbank.requests.skeleton.Endpoint.*;
 
 public class UserSteps {
@@ -53,7 +52,7 @@ public class UserSteps {
         return new ValidatedCrudRequester<ProfileResponse>(user, CUSTOMER_PROFILE, ResponseSpecs.requestReturnsOK()).get(0);
     }
 
-    public static void transferMoney(RequestSpecification user, int amount, long senderAccountId, long receiverAccountId) {
+    public static void transferMoney(RequestSpecification user, double amount, long senderAccountId, long receiverAccountId) {
         TransferMoney body = generateTransferMoney(amount, senderAccountId, receiverAccountId);
 
         new CrudRequester(user, ACCOUNTS_TRANSFER, ResponseSpecs.requestReturnsOK())
@@ -67,7 +66,7 @@ public class UserSteps {
                 .post(body).extract().asString();
     }
 
-    private static TransferMoney generateTransferMoney(int amount, long senderAccountId, long receiverAccountId) {
+    private static TransferMoney generateTransferMoney(double amount, long senderAccountId, long receiverAccountId) {
         return TransferMoney.builder()
                 .amount(amount)
                 .senderAccountId(senderAccountId)
@@ -75,25 +74,11 @@ public class UserSteps {
                 .build();
     }
 
-    public static Transaction[] getAccountsTransactions(RequestSpecification user, long accountId) {
-        return given()
-                .spec(user)
-                .get("/accounts/" + accountId + "/transactions")
-                .then()
-                .assertThat()
-                .spec(ResponseSpecs.requestReturnsOK())
-                .extract()
-                .as(Transaction[].class);
+    public static TransactionsResponse getAccountsTransactions(RequestSpecification user, long accountId) {
+        return new ValidatedCrudRequester<TransactionsResponse>(user, ACCOUNTS_ID_TRANSACTIONS, ResponseSpecs.requestReturnsOK()).get(accountId);
     }
 
     public static String getAccountsTransactionsForInvalidAccount(RequestSpecification user, long accountId) {
-        return given()
-                .spec(user)
-                .get("/accounts/" + accountId + "/transactions")
-                .then()
-                .assertThat()
-                .spec(ResponseSpecs.requestReturnsForbidden())
-                .extract()
-                .asString();
+        return new CrudRequester(user, ACCOUNTS_ID_TRANSACTIONS, ResponseSpecs.requestReturnsForbidden()).get(accountId).extract().asString();
     }
 }
