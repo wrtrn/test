@@ -2,11 +2,10 @@ package nbank.api.secondPart;
 
 import io.restassured.specification.RequestSpecification;
 import nbank.api.BaseTest;
-import nbank.generators.RandomData;
+import nbank.api.generators.RandomData;
 import nbank.api.models.AccountResponse;
 import nbank.api.models.CreateUserRequest;
-import nbank.api.models.Transaction;
-import nbank.models.TransactionsResponse;
+import nbank.api.models.TransactionsResponse;
 import nbank.api.requests.steps.AdminSteps;
 import nbank.api.requests.steps.UserSteps;
 import nbank.api.specs.RequestSpecs;
@@ -36,14 +35,14 @@ public class TransactionsTest extends BaseTest {
         long firstAccountNumber = Integer.parseInt(account1.getAccountNumber().substring(3));
         long secondAccountNumber = Integer.parseInt(account2.getAccountNumber().substring(3));
 
-        UserSteps.transferMoney(authAsUser1, depositValue-50, firstAccountNumber, secondAccountNumber);
+        UserSteps.transferMoney(authAsUser1, depositValue - 50, firstAccountNumber, secondAccountNumber);
 
         TransactionsResponse transactions = getAccountsTransactions(authAsUser1, firstAccountNumber);
-        double depositSum = Arrays.stream(transactions.getTransactions()).filter(tr->tr.getType().equals("DEPOSIT")).findFirst().orElse(null).getAmount();
-        double transferOutSum = Arrays.stream(transactions.getTransactions()).filter(tr->tr.getType().equals("TRANSFER_OUT")).findFirst().orElse(null).getAmount();
+        int depositSum = Arrays.stream(transactions.getTransactions()).filter(tr -> tr.getType().equals("DEPOSIT")).findFirst().orElse(null).getAmount();
+        int transferOutSum = Arrays.stream(transactions.getTransactions()).filter(tr -> tr.getType().equals("TRANSFER_OUT")).findFirst().orElse(null).getAmount();
 
         softly.assertThat(depositValue).isEqualTo(depositSum);
-        softly.assertThat(depositValue-50).isEqualTo(transferOutSum);
+        softly.assertThat(depositValue - 50).isEqualTo(transferOutSum);
     }
 
     @Test
